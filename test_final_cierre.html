@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test Final - Cierre de Caja</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .test-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        .success {
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #dc3545;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #17a2b8;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-warning { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Final - Sistema de Cierre de Caja</h1>
+        <p>Este test verifica que el sistema de cierre de caja funcione correctamente después de las correcciones aplicadas.</p>
+
+        <div class="info">
+            <strong>🎯 Objetivo:</strong> Verificar que el cierre de caja funcione sin errores de conexión
+        </div>
+
+        <h3>📋 Tests Disponibles</h3>
+        <button class="test-btn" onclick="testConnection()">🔗 Probar Conexión</button>
+        <button class="test-btn" onclick="testCashClosure()">🔒 Probar Cierre de Caja</button>
+        <button class="test-btn" onclick="testAllEndpoints()">🌐 Probar Todos los Endpoints</button>
+        <button class="test-btn" onclick="clearResults()">🧹 Limpiar Resultados</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = type === 'success' ? 'status-success' : 
+                               type === 'error' ? 'status-error' : 'status-warning';
+            
+            results.innerHTML += `
+                <div class="${type}">
+                    <span class="status-indicator ${statusClass}"></span>
+                    <strong>[${timestamp}]</strong> ${message}
+                </div>
+            `;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            results.innerHTML = '';
+        }
+
+        async function testConnection() {
+            log('🔍 Iniciando test de conexión...', 'info');
+            
+            const urls = [
+                'http://localhost/kiosco/api/gestion_caja_completa.php?accion=validar_turno_unico',
+                'http://127.0.0.1/kiosco/api/gestion_caja_completa.php?accion=validar_turno_unico'
+            ];
+
+            for (const url of urls) {
+                try {
+                    log(`🔗 Probando: ${url}`, 'info');
+                    
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        log(`✅ Conexión exitosa: ${JSON.stringify(data)}`, 'success');
+                    } else {
+                        log(`⚠️ Respuesta con error HTTP: ${response.status}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ Error de conexión: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testCashClosure() {
+            log('🔒 Iniciando test de cierre de caja...', 'info');
+            
+            const testData = {
+                usuario_id: 1,
+                monto_cierre: 13000,
+                notas: `Test de cierre automático - ${new Date().toISOString()}`
+            };
+
+            log(`📝 Datos de prueba: ${JSON.stringify(testData, null, 2)}`, 'info');
+
+            const urls = [
+                'http://localhost/kiosco/api/gestion_caja_completa.php?accion=cerrar_caja',
+                'http://127.0.0.1/kiosco/api/gestion_caja_completa.php?accion=cerrar_caja'
+            ];
+
+            for (const url of urls) {
+                try {
+                    log(`🔗 Probando cierre con: ${url}`, 'info');
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(testData)
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success) {
+                        log(`🎉 Cierre exitoso! Resultado: ${JSON.stringify(result)}`, 'success');
+                        break;
+                    } else {
+                        log(`⚠️ Error en cierre: ${result.error || 'Error desconocido'}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ Error de red: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testAllEndpoints() {
+            log('🌐 Probando todos los endpoints disponibles...', 'info');
+            
+            const endpoints = [
+                { name: 'Estado Caja', url: '/api/gestion_caja_completa.php?accion=estado_caja&usuario_id=1' },
+                { name: 'Turno Activo', url: '/api/gestion_caja_completa.php?accion=turno_activo&usuario_id=1' },
+                { name: 'Validar Turno', url: '/api/gestion_caja_completa.php?accion=validar_turno_unico' },
+                { name: 'Historial Turnos', url: '/api/gestion_caja_completa.php?accion=historial_turnos&limite=5' }
+            ];
+
+            const baseUrls = ['http://localhost/kiosco', 'http://127.0.0.1/kiosco'];
+
+            for (const base of baseUrls) {
+                log(`🏠 Probando base URL: ${base}`, 'info');
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const fullUrl = base + endpoint.url;
+                        const response = await fetch(fullUrl);
+                        
+                        if (response.ok) {
+                            log(`✅ ${endpoint.name}: OK`, 'success');
+                        } else {
+                            log(`⚠️ ${endpoint.name}: HTTP ${response.status}`, 'error');
+                        }
+                    } catch (error) {
+                        log(`❌ ${endpoint.name}: ${error.message}`, 'error');
+                    }
+                }
+            }
+        }
+
+        // Auto-ejecutar test de conexión al cargar la página
+        window.addEventListener('load', () => {
+            log('🚀 Página cargada. Ejecutando test inicial...', 'info');
+            setTimeout(testConnection, 1000);
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,14 @@
+# Habilitar reescritura de URLs
+RewriteEngine On
+
+# Si la solicitud va a un archivo PHP en /api, enrutarla directamente
+RewriteCond %{REQUEST_URI} ^/api/.*\.php$
+RewriteRule ^api/(.*)$ api/$1 [L]
+
+# Para solicitudes a archivos o directorios existentes, servirlos directamente
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Para todas las demás solicitudes, enviarlas a index.html
+RewriteRule ^ index.html [L] 

@@ -1,0 +1,1 @@
+{"venta_id":"22","timestamp":1759683671,"data":{"cart":[{"id":481,"name":"Caramelos Sugus Varios Sabores","quantity":1,"price":"150.00"}],"paymentMethod":"efectivo","subtotal":150,"discount":15,"total":135,"discountInfo":null,"cashReceived":200,"change":65,"caja_id":3},"numero_comprobante":"VNT-006","cliente_nombre":"Consumidor Final","metodo_pago":"efectivo","monto_total":135}

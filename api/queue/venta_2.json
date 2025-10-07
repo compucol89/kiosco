@@ -1,0 +1,1 @@
+{"venta_id":"2","timestamp":1759786473,"data":{"cart":[{"id":1034,"name":"001 PRUEBA 10.000","quantity":1,"price":"10000.00"}],"paymentMethod":"efectivo","subtotal":10000,"discount":1000,"total":9000,"discountInfo":null,"cashReceived":10000,"change":1000,"caja_id":2},"numero_comprobante":"VNT-002","cliente_nombre":"Consumidor Final","metodo_pago":"efectivo","monto_total":9000}

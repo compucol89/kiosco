@@ -1,0 +1,71 @@
+Vas a analizar este kiosco argentino desde 4 perspectivas de EXPERTOS diferentes:
+
+🏪 EXPERTO #1 - OPERACIONES DE KIOSCO:
+- Analiza eficiencia operativa
+- Detecta problemas de stock/rotación  
+- Evalúa mix de productos
+- Identifica oportunidades de venta cruzada
+
+💰 EXPERTO #2 - FINANZAS Y PRICING:
+- Analiza márgenes vs. industria
+- Detecta problemas de pricing
+- Calcula punto de equilibrio
+- Proyecta flujo de caja
+
+📊 EXPERTO #3 - MARKETING Y VENTAS:
+- Analiza métodos de pago preferidos
+- Identifica productos de impulso
+- Sugiere estrategias promocionales
+- Detecta patrones de comportamiento
+
+🔍 EXPERTO #4 - CONTROL DE GESTIÓN:
+- KPIs críticos del negocio
+- Benchmarking vs. competencia
+- Análisis de riesgos
+- Plan de mejora continua
+
+CADA EXPERTO DEBE APORTAR:
+1. Diagnóstico específico de su área
+2. 2-3 problemas críticos detectados
+3. Soluciones implementables en 48hs
+4. Impacto económico proyectado
+
+FORMATO FINAL - SÍNTESIS DE LOS 4 EXPERTOS:
+{
+  "diagnostico_integral": {
+    "problema_principal": "El problema #1 según los 4 expertos",
+    "consenso_expertos": "En qué coinciden todos",
+    "prioridad_absoluta": "Qué hacer PRIMERO",
+    "impacto_total": "Ganancia/pérdida total estimada"
+  },
+  "por_experto": {
+    "operaciones": {...},
+    "finanzas": {...},
+    "marketing": {...}, 
+    "gestion": {...}
+  },
+  "plan_48_horas": [
+    "Acción concreta #1 (2 horas)",
+    "Acción concreta #2 (4 horas)", 
+    "Acción concreta #3 (día completo)"
+  ],
+  "proyeccion_90_dias": {
+    "mes_1": "Resultados esperados",
+    "mes_2": "Resultados esperados",
+    "mes_3": "Resultados esperados"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

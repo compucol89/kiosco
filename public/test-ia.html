@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test OpenAI IA - KIOSCO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .resultado {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Test de IA OpenAI - KIOSCO</h1>
+        <p>Herramienta para probar la conexión con OpenAI usando tu token.</p>
+        
+        <div>
+            <button class="button" onclick="testConexion()">🔌 Test Conexión Basic</button>
+            <button class="button" onclick="testAnalisisCompleto()">🧠 Test Análisis Completo</button>
+            <button class="button" onclick="testDatosPrueba()">📊 Test con Datos de Prueba</button>
+        </div>
+        
+        <div id="resultado" class="resultado" style="display: none;">
+            <strong>Resultado:</strong><br>
+            <div id="contenido-resultado"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = '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';
+        const API_URL = 'https://api.openai.com/v1/chat/completions';
+
+        function mostrarResultado(contenido, tipo = '') {
+            const resultado = document.getElementById('resultado');
+            const contenidoDiv = document.getElementById('contenido-resultado');
+            
+            resultado.style.display = 'block';
+            resultado.className = `resultado ${tipo}`;
+            contenidoDiv.innerHTML = contenido;
+        }
+
+        async function testConexion() {
+            mostrarResultado('⏳ Probando conexión con OpenAI...', 'loading');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            {
+                                role: 'user',
+                                content: 'Responde solo "CONEXIÓN OK" si funcionas correctamente'
+                            }
+                        ],
+                        max_tokens: 10
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado(`✅ CONEXIÓN EXITOSA
+Modelo: gpt-4o-mini
+Respuesta: ${data.choices[0].message.content}
+Tokens usados: ${data.usage?.total_tokens || 'N/A'}
+Costo aprox: $${((data.usage?.total_tokens || 0) * 0.00015 / 1000).toFixed(6)}`, 'success');
+                } else {
+                    mostrarResultado(`❌ ERROR DE CONEXIÓN
+Status: ${response.status}
+Error: ${data.error?.message || 'Error desconocido'}`, 'error');
+                }
+            } catch (error) {
+                mostrarResultado(`❌ ERROR DE RED
+${error.message}`, 'error');
+            }
+        }
+
+        async function testAnalisisCompleto() {
+            mostrarResultado('🧠 Probando análisis financiero completo...', 'loading');
+            
+            const prompt = `Analiza estos datos de un kiosco argentino y responde en JSON:
+
+DATOS FINANCIEROS:
+- Utilidad Neta: $-5.626,74
+- Total Ventas: 10 productos
+- Margen Neto: -9.7%
+
+PRODUCTOS PROBLEMÁTICOS:
+- Coca Cola: -15% margen
+- Pepsi: -8% margen
+
+Responde en formato JSON:
+{
+  "diagnostico_principal": {
+    "estado": "PERDIENDO",
+    "problema_critico": "string",
+    "causa_principal": "string"
+  },
+  "score_salud": 25,
+  "productos_problematicos": [
+    {
+      "nombre": "Coca Cola",
+      "problema": "margen_negativo",
+      "perdida_por_venta": 150,
+      "accion_inmediata": "Aumentar precio inmediatamente"
+    }
+  ],
+  "soluciones_inmediatas": [
+    {
+      "accion": "string específica",
+      "urgencia": "inmediata",
+      "impacto_estimado": "$ARS estimado"
+    }
+  ]
+}`;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'Eres un experto consultor financiero para kioscos argentinos. Siempre responde en JSON válido.'
+                            },
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 1000,
+                        response_format: { type: "json_object" }
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const analisis = JSON.parse(data.choices[0].message.content);
+                    mostrarResultado(`✅ ANÁLISIS IA EXITOSO
+
+📊 DIAGNÓSTICO PRINCIPAL:
+Estado: ${analisis.diagnostico_principal?.estado}
+Problema: ${analisis.diagnostico_principal?.problema_critico}
+Causa: ${analisis.diagnostico_principal?.causa_principal}
+
+🎯 SCORE DE SALUD: ${analisis.score_salud}/100
+
+🚨 PRODUCTOS PROBLEMÁTICOS:
+${analisis.productos_problematicos?.map(p => 
+  `• ${p.nombre}: ${p.problema} (Pérdida: $${p.perdida_por_venta})`
+).join('\n') || 'Ninguno detectado'}
+
+💡 SOLUCIONES INMEDIATAS:
+${analisis.soluciones_inmediatas?.map(s => 
+  `• ${s.accion} (${s.urgencia})`
+).join('\n') || 'Sin recomendaciones'}
+
+📈 COSTO: $${((data.usage?.total_tokens || 0) * 0.00015 / 1000).toFixed(6)}
+⏱️  TOKENS: ${data.usage?.total_tokens || 'N/A'}`, 'success');
+                } else {
+                    mostrarResultado(`❌ ERROR EN ANÁLISIS
+${data.error?.message || 'Error desconocido'}`, 'error');
+                }
+            } catch (error) {
+                mostrarResultado(`❌ ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDatosPrueba() {
+            mostrarResultado('📊 Probando con datos reales del sistema...', 'loading');
+            
+            // Simular datos del sistema
+            const datosKiosco = {
+                resumen: {
+                    utilidad_neta: -5626.74,
+                    total_ventas: 15,
+                    total_ingresos_netos: 52750,
+                    margen_neto_porcentaje: -9.7,
+                    roi_neto_porcentaje: -8.9
+                },
+                productos: [
+                    {
+                        nombre: "Coca Cola 500ml",
+                        margen_porcentaje: -15.2,
+                        total_utilidad: -2280,
+                        cantidad_vendida: 15
+                    },
+                    {
+                        nombre: "Pepsi 500ml", 
+                        margen_porcentaje: -8.5,
+                        total_utilidad: -1100,
+                        cantidad_vendida: 12
+                    },
+                    {
+                        nombre: "Agua Mineral",
+                        margen_porcentaje: 25.0,
+                        total_utilidad: 850,
+                        cantidad_vendida: 10
+                    }
+                ]
+            };
+
+            try {
+                // Simular llamada al servicio OpenAI
+                const simulacion = await new Promise(resolve => {
+                    setTimeout(() => {
+                        resolve({
+                            diagnostico_principal: {
+                                estado: "PERDIENDO",
+                                problema_critico: "Productos vendidos por debajo del costo",
+                                causa_principal: "Precios mal configurados en gaseosas",
+                                impacto_economico: "5,626"
+                            },
+                            score_salud: 25,
+                            productos_problematicos: [
+                                {
+                                    nombre: "Coca Cola 500ml",
+                                    problema: "margen_negativo",
+                                    perdida_por_venta: 152,
+                                    accion_inmediata: "Aumentar precio de $800 a $950 mínimo"
+                                },
+                                {
+                                    nombre: "Pepsi 500ml",
+                                    problema: "margen_negativo", 
+                                    perdida_por_venta: 92,
+                                    accion_inmediata: "Aumentar precio de $750 a $850 mínimo"
+                                }
+                            ],
+                            soluciones_inmediatas: [
+                                {
+                                    accion: "Corregir precios de gaseosas inmediatamente",
+                                    urgencia: "inmediata",
+                                    impacto_estimado: "$3,400 recuperados por día"
+                                },
+                                {
+                                    accion: "Revisar costos con proveedor de bebidas",
+                                    urgencia: "esta_semana",
+                                    impacto_estimado: "$5,000 ahorros mensuales"
+                                }
+                            ],
+                            predicciones: {
+                                si_no_actuas: "Pérdidas de $30,000 por mes",
+                                si_implementas_plan: "Ganancia de $15,000 por mes",
+                                tiempo_recuperacion: "2 semanas",
+                                roi_estimado: "150%"
+                            }
+                        });
+                    }, 2000);
+                });
+
+                mostrarResultado(`✅ SIMULACIÓN CON DATOS REALES
+
+🔍 DATOS ANALIZADOS:
+• Utilidad Neta: $-5,626.74
+• Total Ventas: 15 productos
+• Margen Neto: -9.7%
+• Productos en pérdida: 2 de 3
+
+🤖 DIAGNÓSTICO IA:
+Estado: ${simulacion.diagnostico_principal.estado}
+Problema: ${simulacion.diagnostico_principal.problema_critico}
+Impacto: $${simulacion.diagnostico_principal.impacto_economico}
+
+⚠️ PRODUCTOS CRÍTICOS:
+${simulacion.productos_problematicos.map(p => 
+  `• ${p.nombre}: Pérdida $${p.perdida_por_venta} por venta`
+).join('\n')}
+
+🎯 PLAN DE ACCIÓN:
+${simulacion.soluciones_inmediatas.map(s => 
+  `• ${s.accion} → ${s.impacto_estimado}`
+).join('\n')}
+
+📈 PREDICCIONES:
+• Sin actuar: ${simulacion.predicciones.si_no_actuas}
+• Con plan: ${simulacion.predicciones.si_implementas_plan}
+• ROI esperado: ${simulacion.predicciones.roi_estimado}`, 'success');
+
+            } catch (error) {
+                mostrarResultado(`❌ ERROR EN SIMULACIÓN: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

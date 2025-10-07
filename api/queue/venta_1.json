@@ -1,0 +1,1 @@
+{"venta_id":"1","timestamp":1759786314,"data":{"cart":[{"id":482,"name":"Caramelos Donga Varios","quantity":1,"price":"50.00"}],"paymentMethod":"efectivo","subtotal":50,"discount":5,"total":45,"discountInfo":null,"cashReceived":100,"change":55,"caja_id":1},"numero_comprobante":"VNT-001","cliente_nombre":"Consumidor Final","metodo_pago":"efectivo","monto_total":45}
