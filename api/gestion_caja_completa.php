@@ -196,42 +196,26 @@ function obtenerHistorialCompleto($pdo) {
         
         $whereClause = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
         
-        // Query principal con información enriquecida
+        // Query optimizada SIN JOINs complejos (para evitar timeout en producción)
         $sql = "
             SELECT 
-                h.*,
-                u.nombre as cajero_nombre_completo,
-                DATE_FORMAT(h.fecha_hora, '%d/%m/%Y %H:%i') as fecha_formateada,
-                DATE_FORMAT(h.fecha_hora, '%Y-%m-%d') as fecha_solo,
-                TIME_FORMAT(h.fecha_hora, '%H:%i') as hora_solo,
-                CASE h.tipo_evento
-                    WHEN 'apertura' THEN '🔓'
-                    WHEN 'cierre' THEN '🔒'
-                    ELSE '❓'
-                END as icono_evento,
-                CASE h.tipo_diferencia
-                    WHEN 'exacto' THEN '✅'
-                    WHEN 'sobrante' THEN '📈'
-                    WHEN 'faltante' THEN '📉'
-                    ELSE '➖'
-                END as icono_diferencia,
-                CASE
-                    WHEN h.duracion_turno_minutos IS NULL THEN NULL
-                    WHEN h.duracion_turno_minutos > 720 THEN 'Muy largo'
-                    WHEN h.duracion_turno_minutos > 480 THEN 'Largo'
-                    WHEN h.duracion_turno_minutos > 240 THEN 'Normal'
-                    ELSE 'Corto'
-                END as duracion_categoria,
-                CASE
-                    WHEN ABS(h.diferencia) = 0 THEN 'Perfecto'
-                    WHEN ABS(h.diferencia) <= 100 THEN 'Aceptable'
-                    WHEN ABS(h.diferencia) <= 500 THEN 'Alto'
-                    ELSE 'Crítico'
-                END as nivel_diferencia
+                id,
+                numero_turno,
+                tipo_evento,
+                cajero_id,
+                cajero_nombre,
+                fecha_hora,
+                monto_inicial,
+                efectivo_teorico,
+                efectivo_contado,
+                diferencia,
+                tipo_diferencia,
+                cantidad_transacciones,
+                duracion_turno_minutos,
+                DATE_FORMAT(fecha_hora, '%d/%m/%Y %H:%i') as fecha_formateada
             FROM historial_turnos_caja h
-            LEFT JOIN usuarios u ON h.cajero_id = u.id
             $whereClause
-            ORDER BY h.fecha_hora DESC, h.numero_turno DESC, h.tipo_evento ASC
+            ORDER BY h.fecha_hora DESC
             LIMIT $limite OFFSET $offset
         ";
         
