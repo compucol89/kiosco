@@ -20,7 +20,8 @@ const CONFIG = {
     VENTAS_LEGACY: '/api/ventas_reales.php', // DEPRECATED: No usa filtros correctos
     VENTAS_BACKUP: '/api/listar_ventas.php',
     VENTAS_FALLBACK: '/api/ventas_db.php',
-    PROCESAR_VENTA: '/api/procesar_venta_ultra_rapida.php',
+    PROCESAR_VENTA: '/api/procesar_venta_simple_v2.php', // V2: Ultra-simplificada para producción
+    PROCESAR_VENTA_LEGACY: '/api/procesar_venta_ultra_rapida.php', // LEGACY
     ANULAR_VENTA: '/api/anular_venta.php',
     
     // ========== USUARIOS Y AUTENTICACIÓN ==========
