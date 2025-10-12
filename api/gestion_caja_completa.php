@@ -774,6 +774,23 @@ function abrirCaja($pdo) {
     
     $turnoId = $pdo->lastInsertId();
     
+    // 🔥 REGISTRAR EN HISTORIAL (SOLUCIÓN DE RAÍZ)
+    $stmtUsuario = $pdo->prepare("SELECT nombre FROM usuarios WHERE id = ?");
+    $stmtUsuario->execute([$usuarioId]);
+    $nombreUsuario = $stmtUsuario->fetchColumn() ?: 'Usuario';
+    
+    $stmtHistorial = $pdo->prepare("
+        INSERT INTO historial_turnos_caja (
+            numero_turno, tipo_evento, cajero_id, cajero_nombre,
+            fecha_hora, monto_inicial, efectivo_teorico, 
+            efectivo_contado, diferencia, tipo_diferencia
+        ) VALUES (?, 'apertura', ?, ?, NOW(), ?, ?, ?, 0, 'exacto')
+    ");
+    $stmtHistorial->execute([
+        $turnoId, $usuarioId, $nombreUsuario, 
+        $montoAperturaFinal, $montoAperturaFinal, $montoAperturaFinal
+    ]);
+    
     echo json_encode([
         'success' => true,
         'mensaje' => 'Caja abierta exitosamente con verificación',
@@ -944,6 +961,29 @@ function cerrarCaja($pdo) {
     
     $notasCierre = "\n[CIERRE] " . date('Y-m-d H:i:s') . ": " . $notas;
     $stmtCerrar->execute([$montoCierre, $diferencia, $notasCierre, $turno['id']]);
+    
+    // 🔥 REGISTRAR CIERRE EN HISTORIAL (SOLUCIÓN DE RAÍZ)
+    $stmtUsuario = $pdo->prepare("SELECT nombre FROM usuarios WHERE id = ?");
+    $stmtUsuario->execute([$usuarioId]);
+    $nombreUsuario = $stmtUsuario->fetchColumn() ?: 'Usuario';
+    
+    $duracionMinutos = (time() - strtotime($turno['fecha_apertura'])) / 60;
+    $tipoDiferencia = $diferencia == 0 ? 'exacto' : ($diferencia > 0 ? 'sobrante' : 'faltante');
+    
+    $stmtHistorial = $pdo->prepare("
+        INSERT INTO historial_turnos_caja (
+            numero_turno, tipo_evento, cajero_id, cajero_nombre,
+            fecha_hora, monto_inicial, efectivo_teorico, 
+            efectivo_contado, diferencia, tipo_diferencia,
+            cantidad_transacciones, duracion_turno_minutos
+        ) VALUES (?, 'cierre', ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?)
+    ");
+    $stmtHistorial->execute([
+        $turno['id'], $usuarioId, $nombreUsuario,
+        $turno['monto_apertura'], $turno['efectivo_teorico'],
+        $montoCierre, $diferencia, $tipoDiferencia,
+        $turno['cantidad_ventas'] ?? 0, $duracionMinutos
+    ]);
     
     echo json_encode([
         'success' => true,
