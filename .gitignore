@@ -1,6 +1,7 @@
-# Solo excluir archivos de configuración de BD (sensibles)
+# Archivos de configuración sensibles
 api/db_config.php
 api/bd_conexion.php
+src/config/aiConfig.local.js
 
 # Node modules (demasiado pesado, no necesario en producción)
 node_modules/

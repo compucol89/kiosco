@@ -109,8 +109,16 @@ const configurarToken = (proveedor, token) => {
 
 // 🚀 OBTENER CONFIGURACIÓN ACTIVA
 const obtenerConfigActiva = () => {
-  // CONFIGURACIÓN FIJA CON TU TOKEN OPENAI
-  const TOKEN_OPENAI = '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';
+  // Intentar cargar token desde archivo local
+  let TOKEN_OPENAI = null;
+  
+  try {
+    // Importar desde archivo local (solo existe en servidor, no en GitHub)
+    const localConfig = require('./aiConfig.local.js');
+    TOKEN_OPENAI = localConfig.OPENAI_API_KEY;
+  } catch (e) {
+    console.warn('⚠️ aiConfig.local.js no encontrado. Crea este archivo con tu API key.');
+  }
   
   return {
     nombre: 'openai',
