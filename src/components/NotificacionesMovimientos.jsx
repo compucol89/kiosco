@@ -26,7 +26,16 @@ const NotificacionesMovimientos = () => {
   // 🔄 Verificar eventos nuevos
   const verificarEventosNuevos = async () => {
     try {
-      const response = await fetch(`${CONFIG.API_URL}/api/gestion_caja_completa.php?accion=historial_completo&usuario_id=1&limite=5&desde=${ultimaVerificacion}&_t=${Date.now()}`);
+      // Agregar timeout de 5 segundos para evitar que se cuelgue
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(
+        `${CONFIG.API_URL}/api/gestion_caja_completa.php?accion=historial_completo&usuario_id=1&limite=5&desde=${ultimaVerificacion}&_t=${Date.now()}`,
+        { signal: controller.signal }
+      );
+      
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (data.success && data.historial) {
