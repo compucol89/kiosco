@@ -62,6 +62,25 @@ try {
     $stmt->execute([$fechaInicio, $fechaFin]);
     $ventas_bd = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // 🔥 OBTENER GASTOS FIJOS MENSUALES REALES
+    $mesActual = date('Y-m');
+    $stmtGastos = $pdo->prepare("
+        SELECT gastos_totales 
+        FROM gastos_mensuales 
+        WHERE mes_ano = ? AND activo = 1 
+        LIMIT 1
+    ");
+    $stmtGastos->execute([$mesActual]);
+    $gastosMensualesReales = floatval($stmtGastos->fetchColumn() ?: 0);
+    
+    // Calcular gastos diarios
+    $diasMes = date('t', strtotime($mesActual . '-01'));
+    $gastosDiariosReales = $gastosMensualesReales / $diasMes;
+    
+    // Calcular gastos del período actual
+    $diasPeriodo = (strtotime($fechaFin) - strtotime($fechaInicio)) / (24*60*60) + 1;
+    $gastosPeriodoActual = $gastosDiariosReales * $diasPeriodo;
+    
     // 2. PROCESAR CADA VENTA PARA EL DETALLE
     $ventas_detalle = [];
     $totales = [
@@ -179,35 +198,57 @@ try {
             ]
         ],
         
-        // COMPONENTE 2: Gastos Fijos
+        // COMPONENTE 2: Gastos Fijos - VALORES REALES DESDE BD
         'componente_2_gastos_fijos' => [
             'tarjeta_1_gastos_mensuales' => [
-                'valor_principal' => 0,
+                'valor_principal' => $gastosMensualesReales,
                 'titulo' => 'Gastos Fijos Mensuales',
-                'subtitulo' => 'Gastos diarios: $0.00',
+                'subtitulo' => 'Total configurado del mes',
                 'icono' => 'building',
                 'color' => 'purple'
             ],
             'tarjeta_2_gastos_diarios' => [
-                'valor_principal' => 0,
-                'titulo' => 'Gastos Fijos Diarios',
-                'subtitulo' => 'Balance: $' . number_format($totales['total_ganancias'], 2),
+                'valor_principal' => $gastosDiariosReales,
+                'titulo' => 'Gasto Fijo por Día',
+                'subtitulo' => '$' . number_format($gastosMensualesReales, 0) . ' ÷ ' . $diasMes . ' días',
                 'icono' => 'calendar',
-                'color' => 'indigo'
+                'color' => 'blue'
             ],
-            'tarjeta_3_saldo_faltante' => [
-                'valor_principal' => 0,
-                'titulo' => 'Saldo Faltante',
-                'subtitulo' => 'Meta alcanzada',
+            'tarjeta_3_gastos_periodo' => [
+                'valor_principal' => $gastosPeriodoActual,
+                'titulo' => 'Gastos del Período',
+                'subtitulo' => $diasPeriodo . ' días × $' . number_format($gastosDiariosReales, 2) . '/día',
+                'icono' => 'calendar',
+                'color' => 'orange'
+            ],
+            'tarjeta_4_utilidad_neta' => [
+                'valor_principal' => $totales['total_ganancias'] - $gastosPeriodoActual,
+                'titulo' => 'Utilidad Neta Real',
+                'subtitulo' => ($totales['total_ganancias'] - $gastosPeriodoActual) >= 0 
+                    ? '✅ Ganancia después de gastos' 
+                    : '❌ Pérdida después de gastos',
+                'icono' => 'trending-' . (($totales['total_ganancias'] - $gastosPeriodoActual) >= 0 ? 'up' : 'down'),
+                'color' => ($totales['total_ganancias'] - $gastosPeriodoActual) >= 0 ? 'green' : 'red'
+            ],
+            'tarjeta_5_progreso_mes' => [
+                'valor_principal' => $gastosMensualesReales > 0 
+                    ? round(($totales['total_ganancias'] / $gastosMensualesReales) * 100, 1) 
+                    : 0,
+                'titulo' => 'Progreso vs Gastos Mes',
+                'subtitulo' => 'De los $' . number_format($gastosMensualesReales, 0) . ' mensuales',
                 'icono' => 'target',
-                'color' => 'green'
+                'color' => $totales['total_ganancias'] >= $gastosMensualesReales ? 'green' : 'orange'
             ],
-            'tarjeta_4_roi' => [
-                'valor_principal' => ($totales['total_costos'] > 0) ? round(($totales['total_ganancias'] / $totales['total_costos']) * 100, 1) : 0,
-                'titulo' => 'ROI (%)',
-                'subtitulo' => 'Retorno sobre inversión',
+            'tarjeta_6_roi_neto' => [
+                'valor_principal' => ($totales['total_costos'] > 0) 
+                    ? round((($totales['total_ganancias'] - $gastosPeriodoActual) / $totales['total_costos']) * 100, 1) 
+                    : 0,
+                'titulo' => 'ROI Neto (%)',
+                'subtitulo' => ($totales['total_ganancias'] - $gastosPeriodoActual) >= 0 
+                    ? 'Ganancia real: $' . number_format($totales['total_ganancias'] - $gastosPeriodoActual, 2)
+                    : 'Pérdida: $' . number_format(abs($totales['total_ganancias'] - $gastosPeriodoActual), 2),
                 'icono' => 'percent',
-                'color' => 'red'
+                'color' => (($totales['total_ganancias'] - $gastosPeriodoActual) > 0) ? 'green' : 'red'
             ]
         ],
         
@@ -251,10 +292,13 @@ try {
         ],
         
         'configuracion_gastos' => [
-            'gastos_mensuales' => 0,
-            'gastos_diarios' => 0,
-            'mes_actual' => date('Y-m'),
-            'dias_mes' => date('t')
+            'gastos_mensuales' => $gastosMensualesReales,
+            'gastos_diarios' => $gastosDiariosReales,
+            'gastos_periodo' => $gastosPeriodoActual,
+            'dias_periodo' => $diasPeriodo,
+            'mes_actual' => $mesActual,
+            'dias_mes' => $diasMes,
+            'utilidad_neta_periodo' => $totales['total_ganancias'] - $gastosPeriodoActual
         ]
     ];
     

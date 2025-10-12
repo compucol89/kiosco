@@ -194,7 +194,6 @@ const UsuariosPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Enviando formulario con datos:', formData);
     
     // Validaciones básicas
     if (!formData.username || !formData.nombre || !formData.role) {

@@ -211,32 +211,19 @@ const HistorialTurnosPage = () => {
 
   // 💰 Calcular análisis de efectivo real del período
   const calcularEfectivoRealPeriodo = () => {
-    console.log('🔥 CALCULANDO EFECTIVO REAL - Historial disponible:', historialConArqueo.length);
     if (!historialConArqueo.length) return null;
 
     // Obtener eventos ordenados cronológicamente (más recientes primero)
     const eventosOrdenados = [...historialConArqueo];
-    console.log('🔥 EVENTOS ORDENADOS:', eventosOrdenados.map(e => ({
-      tipo: e.tipo_evento,
-      turno: e.numero_turno,
-      efectivo_teorico: e.efectivo_teorico,
-      fecha: e.fecha_hora
-    })));
-    
-    // 🔥 LÓGICA SIMPLIFICADA: SIEMPRE verificar el estado real primero
-    console.log('🔥 ESTADO efectivoRealActual:', efectivoRealActual);
     
     let efectivoQueDeberiaTener = 0;
     let eventoReferencia = null;
     let cajaRealmenteAbiertaLocal = efectivoRealActual > 0;
     
-    console.log('🔥 ¿CAJA REALMENTE ABIERTA?:', cajaRealmenteAbiertaLocal);
-    
     if (cajaRealmenteAbiertaLocal) {
       // Caja abierta: usar efectivo real actual
       efectivoQueDeberiaTener = efectivoRealActual;
       eventoReferencia = eventosOrdenados.find(e => e.tipo_evento === 'apertura' && !e.fecha_cierre);
-      console.log('🔥 LÓGICA CAJA ABIERTA - Efectivo:', efectivoQueDeberiaTener);
     } else {
       // Caja cerrada: buscar el último cierre válido
       const ultimoCierre = eventosOrdenados.find(e => 
@@ -247,24 +234,11 @@ const HistorialTurnosPage = () => {
       if (ultimoCierre) {
         efectivoQueDeberiaTener = parseFloat(ultimoCierre.efectivo_teorico || 0);
         eventoReferencia = ultimoCierre;
-        console.log('🔥 LÓGICA CAJA CERRADA - Último cierre:', {
-          turno: ultimoCierre.numero_turno,
-          efectivo_teorico: ultimoCierre.efectivo_teorico,
-          efectivo_final: efectivoQueDeberiaTener
-        });
       }
     }
 
     const efectivoInicialPeriodo = parseFloat(eventosOrdenados[eventosOrdenados.length - 1]?.monto_inicial || 0);
     const efectivoFinalReal = eventoReferencia && eventoReferencia.efectivo_contado ? parseFloat(eventoReferencia.efectivo_contado || 0) : efectivoQueDeberiaTener;
-    
-    console.log('🔥 VALORES CALCULADOS:', {
-      efectivoInicialPeriodo,
-      efectivoFinalReal,
-      efectivoQueDeberiaTener,
-      'eventoReferencia.efectivo_contado': eventoReferencia?.efectivo_contado,
-      'eventoReferencia.efectivo_teorico': eventoReferencia?.efectivo_teorico
-    });
     
     // Sumar diferencias acumuladas de todos los cierres
     const cierres = eventosOrdenados.filter(e => e.tipo_evento === 'cierre');
@@ -299,13 +273,6 @@ const HistorialTurnosPage = () => {
       estado_efectivo: diferenciasAcumuladas === 0 ? 'exacto' : (diferenciasAcumuladas > 0 ? 'sobrante' : 'faltante'),
       caja_abierta: cajaRealmenteAbierta // 🔥 CORREGIDO: Estado real basado en efectivoRealActual
     };
-    
-    console.log('🔥 RESULTADO FINAL ANÁLISIS:', {
-      efectivo_que_deberia_haber: resultado.efectivo_que_deberia_haber,
-      caja_abierta: resultado.caja_abierta,
-      efectivoRealActual,
-      eventoReferencia: eventoReferencia?.numero_turno
-    });
     
     return resultado;
   };

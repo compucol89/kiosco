@@ -1,46 +1,19 @@
-@'
-# Dependencias y caches
-node_modules/
-**/node_modules/
-vendor/
-.pnpm-store/
-.cache/
-**/.cache/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Builds / artefactos
-dist/
-build/
-.cypress/
-coverage/
-.tmp/
-.tmp_cache/
-*.log
-
-# Secretos / entornos / IDE
+# Backend (secretos / runtime)
+api/db_config.php
+api/bd_conexion.php
+api/config_facturacion.php
+api/configuracion_empresarial.php
+api/certs/
+api/logs/
+api/*.log
 .env
 .env.*
-*.local
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
 
-# Archivos pesados que no deben ir
-*.zip
-*.7z
-*.rar
-*.tar
-*.tar.gz
-*.bak
-*.sql
-uploads/
-backups/
-'@ | Out-File -Encoding utf8 .gitignore
+# Node / editor
 node_modules/
-node_modules/.cache/
-*.zip
-*.sql
-src/certs/
+dist/
+.DS_Store
+*.map
+
+# Quita "build/" si querés versionarlo
+build/

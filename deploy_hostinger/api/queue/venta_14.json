@@ -1,1 +1,0 @@
-{"venta_id":"14","timestamp":1759682160,"data":{"cart":[{"id":1,"name":"Coca Cola 500ml","quantity":1,"price":"75.00"}],"paymentMethod":"efectivo","subtotal":75,"discount":7.5,"total":67.5,"discountInfo":null,"cashReceived":100,"change":32.5,"caja_id":3},"numero_comprobante":"VNT-005","cliente_nombre":"Consumidor Final","metodo_pago":"efectivo","monto_total":67.5}

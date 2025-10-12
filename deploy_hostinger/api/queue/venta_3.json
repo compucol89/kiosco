@@ -1,1 +1,0 @@
-{"venta_id":"3","timestamp":1759789437,"data":{"cart":[{"id":552,"name":"Vaso Descartable Chico","quantity":1,"price":"200.00"}],"paymentMethod":"efectivo","subtotal":200,"discount":20,"total":180,"discountInfo":null,"cashReceived":200,"change":20,"caja_id":2},"numero_comprobante":"VNT-003","cliente_nombre":"Consumidor Final","metodo_pago":"efectivo","monto_total":180}

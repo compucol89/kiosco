@@ -10,11 +10,8 @@ import {
   DollarSign, 
   Lock, 
   Unlock, 
-  AlertTriangle, 
   CheckCircle, 
-  Clock,
-  Wifi,
-  WifiOff
+  Clock
 } from 'lucide-react';
 import CONFIG from '../config/config';
 
@@ -22,7 +19,6 @@ const IndicadorEstadoCaja = () => {
   const [estadoCaja, setEstadoCaja] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [ultimaActualizacion, setUltimaActualizacion] = useState(null);
 
   // 🔄 Obtener estado de caja
   const obtenerEstadoCaja = async () => {
@@ -33,7 +29,6 @@ const IndicadorEstadoCaja = () => {
       
       if (data.success) {
         setEstadoCaja(data);
-        setUltimaActualizacion(new Date());
       } else {
         setError(true);
       }
@@ -61,7 +56,7 @@ const IndicadorEstadoCaja = () => {
         bg: 'bg-gray-100',
         text: 'text-gray-600',
         border: 'border-gray-300',
-        icon: error ? WifiOff : Clock
+        icon: Clock
       };
     }
 
@@ -115,38 +110,13 @@ const IndicadorEstadoCaja = () => {
           </span>
         </div>
       )}
-
-      {/* Indicador de conexión */}
-      <div className="flex items-center gap-1">
-        {error ? (
-          <WifiOff className="w-3 h-3 text-red-500" />
-        ) : (
-          <Wifi className="w-3 h-3 text-green-500" />
-        )}
-        {ultimaActualizacion && (
-          <span className="text-xs text-gray-500">
-            {ultimaActualizacion.toLocaleTimeString('es-AR', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              second: '2-digit'
-            })}
-          </span>
-        )}
-      </div>
-
-      {/* Botón de actualización manual */}
-      <button
-        onClick={obtenerEstadoCaja}
-        className="p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
-        title="Actualizar estado"
-      >
-        <CheckCircle className="w-3 h-3 text-gray-500 hover:text-gray-700" />
-      </button>
     </div>
   );
 };
 
 export default IndicadorEstadoCaja;
+
+
 
 
 

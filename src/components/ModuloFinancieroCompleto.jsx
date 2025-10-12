@@ -16,7 +16,8 @@ import {
   Save,
   Calculator,
   BarChart3,
-  PieChart
+  PieChart,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import CONFIG from '../config/config';
@@ -144,9 +145,21 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
   const [editandoGastos, setEditandoGastos] = useState(false);
   const [gastosInput, setGastosInput] = useState(gastosActuales || 0);
   const [descripcionInput, setDescripcionInput] = useState('');
+  const [guardando, setGuardando] = useState(false);
 
+  // Calcular gastos diarios automáticamente
+  const diasDelMes = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  const gastosDiarios = gastosInput > 0 ? gastosInput / diasDelMes : 0;
+  
   const handleGuardarGastos = async () => {
+    if (parseFloat(gastosInput) < 0) {
+      alert('⚠️ Los gastos no pueden ser negativos');
+      return;
+    }
+
     try {
+      setGuardando(true);
+      
       const response = await fetch(`${CONFIG.API_URL}/api/gastos_mensuales.php?accion=configurar`, {
         method: 'POST',
         headers: {
@@ -154,7 +167,7 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
         },
         body: JSON.stringify({
           gastos_totales: parseFloat(gastosInput),
-          descripcion: descripcionInput,
+          descripcion: descripcionInput || 'Gastos fijos mensuales',
           mes_ano: new Date().toISOString().slice(0, 7),
           usuario_id: 1
         })
@@ -164,12 +177,18 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
       if (data.success) {
         onGastosChange(parseFloat(gastosInput));
         setEditandoGastos(false);
+        alert(`✅ Gastos guardados correctamente!\n\n💰 Gastos mensuales: $${parseFloat(gastosInput).toLocaleString('es-AR')}\n📅 Gastos diarios: $${gastosDiarios.toLocaleString('es-AR', {maximumFractionDigits: 2})}\n📊 Días del mes: ${diasDelMes}`);
+        
+        // Recargar datos
+        window.location.reload();
       } else {
         throw new Error(data.error);
       }
     } catch (error) {
       console.error('Error guardando gastos:', error);
-      alert('Error al guardar gastos: ' + error.message);
+      alert('❌ Error al guardar gastos: ' + error.message);
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -207,84 +226,168 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
       
       {/* Formulario de configuración de gastos */}
       {editandoGastos && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-purple-800 mb-3">Configurar Gastos Mensuales</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-300 rounded-xl p-6 mb-6">
+          <h3 className="font-bold text-purple-900 mb-4 text-lg flex items-center">
+            <DollarSign className="w-5 h-5 mr-2" />
+            💰 Configurar Gastos Fijos Mensuales
+          </h3>
+          
+          {/* Banner explicativo */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-800 leading-relaxed">
+              <strong>ℹ️ ¿Qué son gastos fijos?</strong> Alquiler, sueldos, servicios, impuestos, etc.
+              El sistema los divide automáticamente entre los días del mes para calcular tu utilidad neta real.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-purple-700 mb-1">
-                Gastos Totales Mensuales
+              <label className="block text-sm font-bold text-purple-800 mb-2">
+                💵 Gastos Totales del Mes
               </label>
-              <input
-                type="number"
-                value={gastosInput}
-                onChange={(e) => setGastosInput(e.target.value)}
-                className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500"
-                placeholder="Ej: 5000000"
-                step="0.01"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">$</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={gastosInput}
+                  onChange={(e) => {
+                    // Permitir solo números
+                    const valor = e.target.value.replace(/[^0-9]/g, '');
+                    setGastosInput(valor);
+                  }}
+                  className="w-full pl-8 pr-3 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg font-semibold"
+                  placeholder="Ej: 6000000"
+                />
+              </div>
+              <p className="text-xs text-purple-600 mt-1">
+                Ingresa el total de gastos fijos mensuales (alquiler, sueldos, etc.)
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-purple-700 mb-1">
-                Descripción (opcional)
+              <label className="block text-sm font-bold text-purple-800 mb-2">
+                📝 Descripción (opcional)
               </label>
-              <input
-                type="text"
+              <textarea
                 value={descripcionInput}
                 onChange={(e) => setDescripcionInput(e.target.value)}
-                className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500"
-                placeholder="Descripción de gastos..."
+                className="w-full px-3 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="Ej: Alquiler $2M + Sueldos $3M"
+                rows="3"
               />
             </div>
           </div>
-          <div className="flex justify-end mt-4 space-x-2">
+
+          {/* Calculadora automática en tiempo real */}
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl p-6 mt-4">
+            <h4 className="font-bold mb-4 flex items-center">
+              <Calculator className="w-5 h-5 mr-2" />
+              🧮 Cálculo Automático
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <p className="text-indigo-200 text-sm mb-1">💰 Gastos Mensuales</p>
+                <p className="text-3xl font-bold">${parseFloat(gastosInput || 0).toLocaleString('es-AR')}</p>
+                <p className="text-indigo-200 text-xs mt-1">Total del mes</p>
+              </div>
+              <div className="text-center bg-white bg-opacity-20 rounded-lg p-3">
+                <p className="text-indigo-100 text-sm mb-1">📅 Días del Mes</p>
+                <p className="text-3xl font-bold">{diasDelMes}</p>
+                <p className="text-indigo-200 text-xs mt-1">{new Date().toLocaleDateString('es-AR', { month: 'long' })}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-indigo-200 text-sm mb-1">📊 Gasto Diario</p>
+                <p className="text-3xl font-bold">${gastosDiarios.toLocaleString('es-AR', {maximumFractionDigits: 2})}</p>
+                <p className="text-indigo-200 text-xs mt-1">Por día</p>
+              </div>
+            </div>
+            
+            {/* Fórmula visual */}
+            <div className="bg-white bg-opacity-10 rounded-lg p-3 mt-4 text-center">
+              <p className="text-sm text-indigo-100 mb-1">📐 Fórmula:</p>
+              <p className="font-mono text-white font-bold">
+                ${parseFloat(gastosInput || 0).toLocaleString('es-AR')} ÷ {diasDelMes} días = ${gastosDiarios.toLocaleString('es-AR', {maximumFractionDigits: 2})} por día
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-6 space-x-3">
             <button
               onClick={() => setEditandoGastos(false)}
-              className="px-4 py-2 text-purple-600 border border-purple-300 rounded-md hover:bg-purple-50"
+              disabled={guardando}
+              className="px-6 py-2 text-purple-700 bg-white border-2 border-purple-300 rounded-lg hover:bg-purple-50 font-medium transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={handleGuardarGastos}
-              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+              disabled={guardando}
+              className="flex items-center px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors disabled:opacity-50"
             >
-              <Save className="w-4 h-4 mr-2" />
-              Guardar
+              {guardando ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar Gastos
+                </>
+              )}
             </button>
           </div>
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <TarjetaInformativa
-          titulo={datos.tarjeta_1_gastos_mensuales.titulo}
-          valorPrincipal={datos.tarjeta_1_gastos_mensuales.valor_principal}
-          subtitulo={datos.tarjeta_1_gastos_mensuales.subtitulo}
-          icono={datos.tarjeta_1_gastos_mensuales.icono}
-          color={datos.tarjeta_1_gastos_mensuales.color}
+          titulo={datos.tarjeta_1_gastos_mensuales?.titulo || 'Gastos Mensuales'}
+          valorPrincipal={datos.tarjeta_1_gastos_mensuales?.valor_principal || 0}
+          subtitulo={datos.tarjeta_1_gastos_mensuales?.subtitulo || ''}
+          icono={datos.tarjeta_1_gastos_mensuales?.icono || 'building'}
+          color={datos.tarjeta_1_gastos_mensuales?.color || 'purple'}
         />
         
         <TarjetaInformativa
-          titulo={datos.tarjeta_2_gastos_diarios.titulo}
-          valorPrincipal={datos.tarjeta_2_gastos_diarios.valor_principal}
-          subtitulo={datos.tarjeta_2_gastos_diarios.subtitulo}
-          icono={datos.tarjeta_2_gastos_diarios.icono}
-          color={datos.tarjeta_2_gastos_diarios.color}
+          titulo={datos.tarjeta_2_gastos_diarios?.titulo || 'Gasto por Día'}
+          valorPrincipal={datos.tarjeta_2_gastos_diarios?.valor_principal || 0}
+          subtitulo={datos.tarjeta_2_gastos_diarios?.subtitulo || ''}
+          icono={datos.tarjeta_2_gastos_diarios?.icono || 'calendar'}
+          color={datos.tarjeta_2_gastos_diarios?.color || 'blue'}
         />
         
         <TarjetaInformativa
-          titulo={datos.tarjeta_3_saldo_faltante.titulo}
-          valorPrincipal={datos.tarjeta_3_saldo_faltante.valor_principal}
-          subtitulo={datos.tarjeta_3_saldo_faltante.subtitulo}
-          icono={datos.tarjeta_3_saldo_faltante.icono}
-          color={datos.tarjeta_3_saldo_faltante.color}
+          titulo={datos.tarjeta_3_gastos_periodo?.titulo || 'Gastos del Período'}
+          valorPrincipal={datos.tarjeta_3_gastos_periodo?.valor_principal || 0}
+          subtitulo={datos.tarjeta_3_gastos_periodo?.subtitulo || ''}
+          icono={datos.tarjeta_3_gastos_periodo?.icono || 'calendar'}
+          color={datos.tarjeta_3_gastos_periodo?.color || 'orange'}
         />
         
         <TarjetaInformativa
-          titulo={datos.tarjeta_4_roi.titulo}
-          valorPrincipal={datos.tarjeta_4_roi.valor_principal}
-          subtitulo={datos.tarjeta_4_roi.subtitulo}
-          icono={datos.tarjeta_4_roi.icono}
-          color={datos.tarjeta_4_roi.color}
+          titulo={datos.tarjeta_4_utilidad_neta?.titulo || 'Utilidad Neta'}
+          valorPrincipal={datos.tarjeta_4_utilidad_neta?.valor_principal || 0}
+          subtitulo={datos.tarjeta_4_utilidad_neta?.subtitulo || ''}
+          icono={datos.tarjeta_4_utilidad_neta?.icono || 'trending-up'}
+          color={datos.tarjeta_4_utilidad_neta?.color || 'green'}
+        />
+        
+        <TarjetaInformativa
+          titulo={datos.tarjeta_5_progreso_mes?.titulo || 'Progreso Mes'}
+          valorPrincipal={datos.tarjeta_5_progreso_mes?.valor_principal || 0}
+          subtitulo={datos.tarjeta_5_progreso_mes?.subtitulo || ''}
+          icono={datos.tarjeta_5_progreso_mes?.icono || 'target'}
+          color={datos.tarjeta_5_progreso_mes?.color || 'orange'}
+          prefijo="%"
+        />
+        
+        <TarjetaInformativa
+          titulo={datos.tarjeta_6_roi_neto?.titulo || 'ROI Neto'}
+          valorPrincipal={datos.tarjeta_6_roi_neto?.valor_principal || 0}
+          subtitulo={datos.tarjeta_6_roi_neto?.subtitulo || ''}
+          icono={datos.tarjeta_6_roi_neto?.icono || 'percent'}
+          color={datos.tarjeta_6_roi_neto?.color || 'red'}
           prefijo="%"
         />
       </div>

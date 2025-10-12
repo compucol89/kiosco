@@ -34,10 +34,11 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import reportesService from '../services/reportesService';
 import AnalisisInteligente from './AnalisisInteligente';
+import CONFIG from '../config/config';
 
 const ReporteVentasModerno = () => {
   const { user } = useAuth();
-  const [pestanaActiva, setPestanaActiva] = useState('resumen'); // 'resumen', 'productos', 'metodos', 'ia'
+  const [pestanaActiva, setPestanaActiva] = useState('resumen'); // 'resumen', 'productos', 'metodos', 'ia', 'turnos'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [periodo, setPeriodo] = useState('hoy');
@@ -45,6 +46,7 @@ const ReporteVentasModerno = () => {
   const [fechaFin, setFechaFin] = useState('');
   const [datos, setDatos] = useState(null);
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
+  const [turnosDelPeriodo, setTurnosDelPeriodo] = useState([]);
 
   // 🔄 CARGAR DATOS OPTIMIZADO
   const cargarDatos = useCallback(async () => {
@@ -71,6 +73,27 @@ const ReporteVentasModerno = () => {
   useEffect(() => {
     cargarDatos();
   }, [cargarDatos]);
+
+  useEffect(() => {
+    cargarTurnosDelPeriodo();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodo, fechaInicio, fechaFin]);
+
+  // 🔄 CARGAR TURNOS DEL PERÍODO
+  const cargarTurnosDelPeriodo = async () => {
+    try {
+      const response = await fetch(`${CONFIG.API_URL}/api/gestion_caja_completa.php?accion=historial_completo&usuario_id=${user?.id || 1}&limite=100&_t=${Date.now()}`);
+      const data = await response.json();
+      
+      if (data.success && data.historial) {
+        // Filtrar solo aperturas para obtener los turnos
+        const aperturas = data.historial.filter(h => h.tipo_evento === 'apertura');
+        setTurnosDelPeriodo(aperturas);
+      }
+    } catch (error) {
+      console.error('Error cargando turnos:', error);
+    }
+  };
 
   // 🎨 COMPONENTE: Tarjeta de métrica moderna
   const TarjetaMetrica = ({ titulo, valor, subtitulo, icono: IconComponent, color, cambio, porcentaje }) => (
@@ -110,14 +133,12 @@ const ReporteVentasModerno = () => {
   const DashboardResumen = ({ resumen, metodos }) => {
     if (!resumen) return null;
 
-    // FORZAR DATOS CORRECTOS - IGNORAR CACHE
-    const totalVentas = parseFloat(resumen.total_ingresos_netos || 0); // $3,600
-    const totalIngresos = parseFloat(resumen.total_ingresos_netos || 0); // $3,600
-    const utilidadBruta = parseFloat(resumen.total_utilidad_bruta || 0); // $3,350
-    const cantidadVentas = parseInt(resumen.total_ventas || 0); // 5 ventas
-    const ticketPromedio = cantidadVentas > 0 ? totalIngresos / cantidadVentas : 0; // $720
-    
-    // Variables para corrección automática (eliminadas las no utilizadas)
+    // 🔧 CORRECCIÓN: Calcular valores reales desde los datos del backend
+    const totalIngresos = parseFloat(resumen.total_ingresos_netos || 0);
+    const utilidadBruta = parseFloat(resumen.total_utilidad_bruta || 0);
+    const cantidadVentas = parseInt(resumen.total_ventas || 0);
+    const ticketPromedio = cantidadVentas > 0 ? totalIngresos / cantidadVentas : 0;
+    const margenBruto = totalIngresos > 0 ? (utilidadBruta / totalIngresos) * 100 : 0;
 
     return (
       <div className="space-y-8">
@@ -125,15 +146,15 @@ const ReporteVentasModerno = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <TarjetaMetrica
             titulo="📊 VENTAS REALIZADAS"
-            valor={resumenGeneral?.total_ventas || 0}
-            subtitulo="ventas realizadas HOY"
+            valor={cantidadVentas}
+            subtitulo={`${cantidadVentas} ventas realizadas HOY`}
             icono={ShoppingCart}
             color="blue"
           />
           
           <TarjetaMetrica
             titulo="Ingresos Netos"
-            valor="$3.600"
+            valor={`$${totalIngresos.toLocaleString('es-AR')}`}
             subtitulo="Después de descuentos"
             icono={DollarSign}
             color="green"
@@ -141,15 +162,15 @@ const ReporteVentasModerno = () => {
           
           <TarjetaMetrica
             titulo="Utilidad Bruta"
-            valor="$3.350"
-            subtitulo="93.1% margen"
+            valor={`$${utilidadBruta.toLocaleString('es-AR')}`}
+            subtitulo={`${margenBruto.toFixed(1)}% margen`}
             icono={TrendingUp}
             color="purple"
           />
           
           <TarjetaMetrica
             titulo="Ticket Promedio"
-            valor="$720"
+            valor={`$${ticketPromedio.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`}
             subtitulo="Por venta realizada"
             icono={Target}
             color="orange"
@@ -339,6 +360,236 @@ const ReporteVentasModerno = () => {
             </table>
           </div>
         </div>
+      </div>
+    );
+  };
+
+  // 🕐 COMPONENTE: Análisis por Turnos
+  const AnalisisPorTurnos = ({ ventasDetalladas, turnos }) => {
+    if (!ventasDetalladas || ventasDetalladas.length === 0) {
+      return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+          <Clock className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">No hay ventas para mostrar</h3>
+          <p className="text-gray-500">No se encontraron ventas en el período seleccionado</p>
+        </div>
+      );
+    }
+
+    // Agrupar ventas por turno
+    const ventasPorTurno = {};
+    const sinTurno = [];
+    
+    ventasDetalladas.forEach(venta => {
+      const fechaVenta = new Date(venta.fecha);
+      
+      // Encontrar a qué turno pertenece esta venta
+      let turnoEncontrado = null;
+      for (const turno of turnos) {
+        const fechaApertura = new Date(turno.fecha_hora);
+        
+        // Buscar si hay un cierre para este turno
+        const cierreDelTurno = turnos.find(t => 
+          t.numero_turno === turno.numero_turno && 
+          t.tipo_evento === 'cierre'
+        );
+        
+        const fechaCierre = cierreDelTurno ? new Date(cierreDelTurno.fecha_hora) : new Date();
+        
+        if (fechaVenta >= fechaApertura && fechaVenta <= fechaCierre) {
+          turnoEncontrado = turno;
+          break;
+        }
+      }
+      
+      if (turnoEncontrado) {
+        const turnoKey = turnoEncontrado.numero_turno;
+        if (!ventasPorTurno[turnoKey]) {
+          ventasPorTurno[turnoKey] = {
+            turno: turnoEncontrado,
+            ventas: [],
+            total: 0,
+            porMetodo: { efectivo: 0, transferencia: 0, tarjeta: 0, qr: 0 }
+          };
+        }
+        ventasPorTurno[turnoKey].ventas.push(venta);
+        ventasPorTurno[turnoKey].total += parseFloat(venta.monto_total || 0);
+        
+        // Sumar por método
+        const metodo = venta.metodo_pago?.toLowerCase();
+        if (ventasPorTurno[turnoKey].porMetodo[metodo] !== undefined) {
+          ventasPorTurno[turnoKey].porMetodo[metodo] += parseFloat(venta.monto_total || 0);
+        }
+      } else {
+        sinTurno.push(venta);
+      }
+    });
+
+    const turnosOrdenados = Object.values(ventasPorTurno).sort((a, b) => b.turno.numero_turno - a.turno.numero_turno);
+
+    return (
+      <div className="space-y-6">
+        {/* Banner informativo */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4">
+          <div className="flex items-start">
+            <div className="p-2 bg-blue-100 rounded-lg mr-3">
+              <Clock className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-blue-900 mb-2">
+                📊 Ventas Agrupadas por Turno de Trabajo
+              </p>
+              <p className="text-xs text-blue-800 leading-relaxed">
+                Cada turno representa un período de trabajo desde la apertura hasta el cierre de caja.
+                Aquí puedes ver exactamente cuántas ventas se hicieron en cada turno y por qué método de pago.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Resumen de turnos */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+            <p className="text-sm text-gray-600 mb-1">Total de Turnos</p>
+            <p className="text-3xl font-bold text-blue-600">{turnosOrdenados.length}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+            <p className="text-sm text-gray-600 mb-1">Total de Ventas</p>
+            <p className="text-3xl font-bold text-green-600">{ventasDetalladas.length}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+            <p className="text-sm text-gray-600 mb-1">Promedio por Turno</p>
+            <p className="text-3xl font-bold text-purple-600">
+              {turnosOrdenados.length > 0 ? (ventasDetalladas.length / turnosOrdenados.length).toFixed(1) : 0}
+            </p>
+          </div>
+        </div>
+
+        {/* Ventas por turno */}
+        {turnosOrdenados.map((turnoData, index) => {
+          const turno = turnoData.turno;
+          const ventas = turnoData.ventas;
+          
+          return (
+            <div key={turno.numero_turno} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-hidden">
+              {/* Header del turno */}
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="p-3 bg-white bg-opacity-20 rounded-xl mr-4">
+                      <Clock className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold">🔓 Turno #{turno.numero_turno}</h3>
+                      <p className="text-blue-100 text-sm">
+                        Cajero: {turno.cajero_nombre || 'N/A'} • 
+                        Apertura: {new Date(turno.fecha_hora).toLocaleString('es-AR', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold">{ventas.length}</p>
+                    <p className="text-blue-100 text-sm">ventas</p>
+                  </div>
+                </div>
+
+                {/* Métricas rápidas del turno */}
+                <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-blue-400">
+                  <div className="text-center">
+                    <p className="text-blue-100 text-xs mb-1">💵 Efectivo</p>
+                    <p className="font-bold">${turnoData.porMetodo.efectivo.toLocaleString('es-AR')}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-blue-100 text-xs mb-1">📱 Transferencia</p>
+                    <p className="font-bold">${turnoData.porMetodo.transferencia.toLocaleString('es-AR')}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-blue-100 text-xs mb-1">💳 Tarjeta</p>
+                    <p className="font-bold">${turnoData.porMetodo.tarjeta.toLocaleString('es-AR')}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-blue-100 text-xs mb-1">📱 QR</p>
+                    <p className="font-bold">${turnoData.porMetodo.qr.toLocaleString('es-AR')}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabla de ventas del turno */}
+              <div className="p-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha/Hora</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Método</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Monto</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {ventas.map((venta, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {new Date(venta.fecha).toLocaleString('es-AR', { 
+                              day: '2-digit', 
+                              month: '2-digit', 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{venta.cliente_nombre || 'Cliente'}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                              venta.metodo_pago === 'efectivo' ? 'bg-green-100 text-green-800' :
+                              venta.metodo_pago === 'transferencia' ? 'bg-blue-100 text-blue-800' :
+                              venta.metodo_pago === 'tarjeta' ? 'bg-purple-100 text-purple-800' :
+                              'bg-orange-100 text-orange-800'
+                            }`}>
+                              {venta.metodo_pago}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
+                            ${parseFloat(venta.monto_total || 0).toLocaleString('es-AR')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-blue-50">
+                      <tr>
+                        <td colSpan="3" className="px-4 py-3 text-right font-bold text-gray-800">
+                          Total del Turno #{turno.numero_turno}:
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-blue-600">
+                          ${turnoData.total.toLocaleString('es-AR')}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Ventas sin turno asignado (si existen) */}
+        {sinTurno.length > 0 && (
+          <div className="bg-yellow-50 rounded-xl shadow-sm border-2 border-yellow-300 p-6">
+            <div className="flex items-center mb-4">
+              <AlertTriangle className="w-6 h-6 text-yellow-600 mr-3" />
+              <div>
+                <h3 className="font-bold text-yellow-800">⚠️ Ventas Sin Turno Asignado</h3>
+                <p className="text-sm text-yellow-700">
+                  {sinTurno.length} ventas no pudieron asociarse a ningún turno
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -580,6 +831,17 @@ const ReporteVentasModerno = () => {
                 Métodos de Pago
               </button>
               <button
+                onClick={() => setPestanaActiva('turnos')}
+                className={`${
+                  pestanaActiva === 'turnos'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+              >
+                <Clock className="w-4 h-4" />
+                Por Turnos
+              </button>
+              <button
                 onClick={() => setPestanaActiva('ia')}
                 className={`${
                   pestanaActiva === 'ia'
@@ -607,22 +869,16 @@ const ReporteVentasModerno = () => {
           <AnalisisMetodos metodos={metodosPago} resumen={resumenGeneral} />
         )}
 
+        {pestanaActiva === 'turnos' && (
+          <AnalisisPorTurnos ventasDetalladas={ventasDetalladas} turnos={turnosDelPeriodo} />
+        )}
+
         {pestanaActiva === 'ia' && (
-          (() => {
-            console.log('🔍 Renderizando AnalisisInteligente con:', { 
-              datos: datos, 
-              resumenGeneral: resumenGeneral, 
-              productos: datos?.productos_analisis,
-              pestanaActiva 
-            });
-            return (
-              <AnalisisInteligente 
-                datos={datos} 
-                resumen={resumenGeneral} 
-                productos={datos?.productos_analisis}
-              />
-            );
-          })()
+          <AnalisisInteligente 
+            datos={datos} 
+            resumen={resumenGeneral} 
+            productos={datos?.productos_analisis}
+          />
         )}
 
       </div>

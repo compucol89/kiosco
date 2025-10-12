@@ -216,3 +216,5 @@ export const MetricasRendimiento = ({ metricas, tiempoTurno, resumenVentas }) =>
 
 
 
+
+

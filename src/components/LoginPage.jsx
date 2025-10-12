@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { User, Lock, LogIn, AlertCircle, Store } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Lock, LogIn, AlertCircle, Store, Shield, Copy, Check } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import CONFIG from '../config/config';
+import { generateDeviceFingerprint, getDeviceInfo } from '../utils/deviceFingerprint';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -10,6 +11,22 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { login } = useAuth();
+  
+  // Estados para dispositivos
+  const [deviceFingerprint, setDeviceFingerprint] = useState('');
+  const [dispositivoBloqueado, setDispositivoBloqueado] = useState(false);
+  const [codigoActivacion, setCodigoActivacion] = useState('');
+  const [estadoDispositivo, setEstadoDispositivo] = useState(''); // 'pendiente', 'rechazado'
+  const [copiado, setCopiado] = useState(false);
+  
+  // Generar fingerprint al cargar
+  useEffect(() => {
+    const initFingerprint = async () => {
+      const fp = await generateDeviceFingerprint();
+      setDeviceFingerprint(fp);
+    };
+    initFingerprint();
+  }, []);
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +40,45 @@ const LoginPage = () => {
     setError(null);
     
     try {
-      // Realizar solicitud a la API real
+      // 🔐 PASO 1: Verificar dispositivo confiable
+      const dispositivoResponse = await axios.get(
+        `${CONFIG.API_URL}/api/dispositivos_confiables.php?accion=verificar_dispositivo&fingerprint=${encodeURIComponent(deviceFingerprint)}&username=${encodeURIComponent(username)}`
+      );
+      
+      if (dispositivoResponse.data && !dispositivoResponse.data.acceso_concedido) {
+        // Dispositivo no autorizado
+        if (dispositivoResponse.data.requiere_aprobacion) {
+          // Solicitar código de activación
+          const solicitudResponse = await axios.post(
+            `${CONFIG.API_URL}/api/dispositivos_confiables.php?accion=solicitar_acceso`,
+            {
+              device_fingerprint: deviceFingerprint,
+              username: username
+            }
+          );
+          
+          if (solicitudResponse.data.success) {
+            setCodigoActivacion(solicitudResponse.data.codigo_activacion);
+            setDispositivoBloqueado(true);
+            setEstadoDispositivo('pendiente');
+            setLoading(false);
+            return;
+          }
+        } else if (dispositivoResponse.data.estado === 'pendiente') {
+          // Ya tiene solicitud pendiente
+          setCodigoActivacion(dispositivoResponse.data.codigo_activacion);
+          setDispositivoBloqueado(true);
+          setEstadoDispositivo('pendiente');
+          setLoading(false);
+          return;
+        } else {
+          setError(dispositivoResponse.data.motivo || 'Dispositivo no autorizado');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // 🔐 PASO 2: Si el dispositivo está aprobado, proceder con autenticación
       const response = await axios.post(`${CONFIG.API_URL}/api/auth.php`, {
         username: username,
         password: password
@@ -48,6 +103,102 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
+  
+  const copiarCodigo = () => {
+    navigator.clipboard.writeText(codigoActivacion);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  };
+
+  const intentarNuevamente = () => {
+    setDispositivoBloqueado(false);
+    setCodigoActivacion('');
+    setEstadoDispositivo('');
+    setError(null);
+  };
+  
+  // Pantalla de código de activación
+  if (dispositivoBloqueado && codigoActivacion) {
+    const deviceInfo = getDeviceInfo();
+    
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="p-8 bg-white rounded-lg shadow-2xl w-full max-w-lg">
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <div className="p-4 bg-yellow-100 rounded-full">
+                <Shield size={48} className="text-yellow-600" />
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">🔐 Dispositivo No Autorizado</h1>
+            <p className="text-gray-600">
+              Este dispositivo necesita ser aprobado por un administrador
+            </p>
+          </div>
+          
+          {/* Código de activación */}
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-6 mb-6">
+            <p className="text-sm font-medium text-yellow-800 mb-3 text-center">
+              📋 Comparte este código con tu administrador:
+            </p>
+            <div className="bg-white rounded-lg p-4 mb-4">
+              <p className="text-3xl font-bold text-center text-gray-800 font-mono tracking-wider">
+                {codigoActivacion}
+              </p>
+            </div>
+            <button
+              onClick={copiarCodigo}
+              className={`w-full flex items-center justify-center px-4 py-3 rounded-lg font-medium transition-colors ${
+                copiado 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-yellow-600 hover:bg-yellow-700 text-white'
+              }`}
+            >
+              {copiado ? (
+                <>
+                  <Check className="w-5 h-5 mr-2" />
+                  ¡Código Copiado!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5 mr-2" />
+                  Copiar Código
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Información del dispositivo */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <p className="text-sm font-medium text-gray-700 mb-2">📱 Información del Dispositivo:</p>
+            <div className="text-sm text-gray-600 space-y-1">
+              <p><strong>Usuario:</strong> {username}</p>
+              <p><strong>Sistema:</strong> {deviceInfo.os}</p>
+              <p><strong>Navegador:</strong> {deviceInfo.browser}</p>
+            </div>
+          </div>
+
+          {/* Instrucciones */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm font-medium text-blue-800 mb-2">ℹ️ Qué hacer ahora:</p>
+            <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+              <li>Copia el código con el botón de arriba</li>
+              <li>Compártelo con el administrador (WhatsApp, teléfono, etc.)</li>
+              <li>Espera a que lo apruebe desde Configuración → Dispositivos</li>
+              <li>Una vez aprobado, intenta iniciar sesión nuevamente</li>
+            </ol>
+          </div>
+
+          <button
+            onClick={intentarNuevamente}
+            className="w-full px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+          >
+            ← Volver al Login
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">

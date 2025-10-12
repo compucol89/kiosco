@@ -284,18 +284,6 @@ const DashboardPrincipal = ({ datosControl, resumenMetodos, movimientos, onRefre
     // Si no tenemos efectivo_teorico del backend, usar el total_entradas
     const fallbackCalculo = entradas - salidas;
     
-    // Log para debug
-    console.log('🔍 CÁLCULO EFECTIVO ESPERADO:', {
-      efectivoTeorico,
-      apertura,
-      entradas, 
-      salidas,
-      fallbackCalculo,
-      formula: 'entradas_totales - salidas',
-      turno: datosControl?.turno,
-      preferencia: efectivoTeorico > 0 ? 'backend' : 'fallback'
-    });
-    
     return efectivoTeorico > 0 ? efectivoTeorico : fallbackCalculo;
   };
 
@@ -329,14 +317,9 @@ const DashboardPrincipal = ({ datosControl, resumenMetodos, movimientos, onRefre
           monto_cierre: efectivoContado, // ENVIAR COMO STRING PARA PRESERVAR EXACTITUD
           notas: datoscierre.observaciones || `Efectivo esperado: $${efectivoEsperado.toLocaleString('es-AR')} | Efectivo contado: $${Number(efectivoContado).toLocaleString('es-AR')} | Diferencia: $${diferencia.toLocaleString('es-AR')} | Cajero: ${datoscierre.cajero}`
         };
-
-        console.log('🔒 Enviando datos de cierre:', cierreData);
         
         // 🔐 USAR EL ENDPOINT PRINCIPAL DE GESTIÓN DE CAJA
         const apiUrl = `${CONFIG.API_URL}/api/gestion_caja_completa.php?accion=cerrar_caja`;
-        
-        console.log('🚀 Usando endpoint principal:', apiUrl);
-        console.log('🔒 Datos de cierre:', cierreData);
         
         // Enviar los datos como JSON en el body (como espera la función cerrarCaja)
         const response = await fetch(apiUrl, {
@@ -347,20 +330,15 @@ const DashboardPrincipal = ({ datosControl, resumenMetodos, movimientos, onRefre
           body: JSON.stringify(cierreData)
         });
         
-        console.log('📡 Respuesta recibida, status:', response.status);
-        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const resultado = await response.json();
-        console.log('✅ Resultado del cierre:', resultado);
         
         if (!resultado.success) {
           throw new Error(resultado.error || 'Error desconocido del servidor');
         }
-        
-        console.log('📋 Respuesta del servidor:', resultado);
         
         // 🎉 CIERRE EXITOSO
         alert(`✅ Caja cerrada exitosamente!\n\n📊 RESUMEN DEL CIERRE:\n💰 Efectivo esperado: $${efectivoEsperado.toLocaleString('es-AR')}\n💵 Efectivo contado: $${Number(efectivoContado).toLocaleString('es-AR')}\n📈 Diferencia: $${diferencia.toLocaleString('es-AR')}\n🕒 Hora de cierre: ${datoscierre.hora}\n👤 Cajero: ${datoscierre.cajero}\n📝 Observaciones: ${datoscierre.observaciones || 'Ninguna'}`);
@@ -403,25 +381,6 @@ const DashboardPrincipal = ({ datosControl, resumenMetodos, movimientos, onRefre
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        
-        {/* 🚨 BANNER SUPERIOR PARA CIERRE DE CAJA */}
-        <div className="bg-red-600 text-white p-4 rounded-xl mb-6 shadow-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Lock className="w-6 h-6 mr-3" />
-              <div>
-                <h2 className="font-bold text-lg">¿Necesitas cerrar la caja?</h2>
-                <p className="text-red-100">Haz clic en el botón para cerrar el turno actual</p>
-              </div>
-            </div>
-            <button
-              onClick={abrirModalCierre}
-              className="px-6 py-3 bg-white text-red-600 rounded-lg hover:bg-gray-100 transition-colors font-bold text-lg"
-            >
-              🔒 CERRAR CAJA AHORA
-            </button>
-          </div>
-        </div>
         
         {/* Header */}
         <div className="mb-8">
@@ -493,12 +452,39 @@ const DashboardPrincipal = ({ datosControl, resumenMetodos, movimientos, onRefre
           </div>
         </div>
 
-        {/* Resumen de Métodos de Pago */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-            <CreditCard className="w-6 h-6 mr-3 text-blue-600" />
-            Resumen de Métodos de Pago
-          </h2>
+        {/* Resumen de Métodos de Pago - TURNO ACTUAL */}
+        <div className="bg-white rounded-xl shadow-sm border-2 border-blue-300 p-6 mb-8">
+          {/* Header con claridad total */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center">
+              <CreditCard className="w-6 h-6 mr-3 text-blue-600" />
+              💳 Ventas por Método de Pago
+            </h2>
+            <div className="bg-blue-100 border border-blue-300 px-4 py-2 rounded-lg">
+              <p className="text-sm font-bold text-blue-800">⏰ SOLO TURNO ACTUAL</p>
+            </div>
+          </div>
+
+          {/* Banner explicativo súper visible */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
+            <div className="flex items-start">
+              <div className="p-2 bg-blue-100 rounded-lg mr-3">
+                <Info className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-blue-900 mb-2">
+                  📊 Importante: Estas ventas son SOLO del turno actual
+                </p>
+                <p className="text-xs text-blue-800 leading-relaxed">
+                  • <strong>Turno abierto desde:</strong> {datosControl?.fecha_apertura ? new Date(datosControl.fecha_apertura).toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : 'N/A'}
+                  <br />
+                  • <strong>¿Por qué $0?</strong> No se han hecho ventas en este turno aún
+                  <br />
+                  • <strong>Ver ventas del día completo:</strong> Ir al Dashboard o Reportes de Ventas
+                </p>
+              </div>
+            </div>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-green-50 rounded-xl border border-green-200 p-6 text-center">
@@ -507,7 +493,7 @@ const DashboardPrincipal = ({ datosControl, resumenMetodos, movimientos, onRefre
               </div>
               <p className="text-sm text-green-600 mb-1 font-medium">Efectivo</p>
               <p className="text-2xl font-bold text-green-800">${parseFloat(datosControl?.ventas_efectivo_reales || 0).toLocaleString('es-AR')}</p>
-              <p className="text-xs text-green-600 mt-1">Solo ventas en efectivo</p>
+              <p className="text-xs text-green-600 mt-1">Del turno actual</p>
             </div>
 
             <div className="bg-blue-50 rounded-xl border border-blue-200 p-6 text-center">
@@ -516,7 +502,7 @@ const DashboardPrincipal = ({ datosControl, resumenMetodos, movimientos, onRefre
               </div>
               <p className="text-sm text-blue-600 mb-1 font-medium">Transferencia</p>
               <p className="text-2xl font-bold text-blue-800">${parseFloat(datosControl?.ventas_transferencia_reales || 0).toLocaleString('es-AR')}</p>
-              <p className="text-xs text-blue-600 mt-1">Ventas por transferencia</p>
+              <p className="text-xs text-blue-600 mt-1">Del turno actual</p>
             </div>
 
             <div className="bg-purple-50 rounded-xl border border-purple-200 p-6 text-center">
@@ -525,7 +511,7 @@ const DashboardPrincipal = ({ datosControl, resumenMetodos, movimientos, onRefre
               </div>
               <p className="text-sm text-purple-600 mb-1 font-medium">Tarjeta</p>
               <p className="text-2xl font-bold text-purple-800">${parseFloat(datosControl?.ventas_tarjeta_reales || 0).toLocaleString('es-AR')}</p>
-              <p className="text-xs text-purple-600 mt-1">Ventas con tarjeta</p>
+              <p className="text-xs text-purple-600 mt-1">Del turno actual</p>
             </div>
 
             <div className="bg-orange-50 rounded-xl border border-orange-200 p-6 text-center">
@@ -534,7 +520,7 @@ const DashboardPrincipal = ({ datosControl, resumenMetodos, movimientos, onRefre
               </div>
               <p className="text-sm text-orange-600 mb-1 font-medium">Pago QR</p>
               <p className="text-2xl font-bold text-orange-800">${parseFloat(datosControl?.ventas_qr_reales || 0).toLocaleString('es-AR')}</p>
-              <p className="text-xs text-orange-600 mt-1">Ventas con QR</p>
+              <p className="text-xs text-orange-600 mt-1">Del turno actual</p>
             </div>
           </div>
         </div>
@@ -1298,7 +1284,7 @@ const GestionCajaMejorada = () => {
             turno: estadoData.turno  // 🔒 MANTENER referencia al turno completo
           };
           
-          // 🔄 OBTENER VENTAS REALES DIRECTAMENTE DE MOVIMIENTOS (MÁS CONFIABLE)
+          // 🔄 OBTENER VENTAS REALES DEL TURNO ACTUAL (NO TODO EL DÍA)
           let ventasEfectivoTotal = 0;
           let ventasTransferenciaTotal = 0;
           let ventasTarjetaTotal = 0;
@@ -1311,10 +1297,10 @@ const GestionCajaMejorada = () => {
             const movData = await movResponse.json();
             
             if (movData.success && movData.movimientos) {
-              // 🔧 CORRECCIÓN: Usar datos del turno en lugar de movimientos para métodos de pago
-              // Las ventas están en los totales del turno, no necesariamente en movimientos individuales
+              // 🔧 CORRECCIÓN: Usar datos del turno para ventas (solo del turno actual)
+              // Las ventas están en los totales del turno, no todo el día
               
-              // VENTAS por método de pago desde el estado del turno
+              // VENTAS por método de pago desde el estado del turno (solo este turno)
               if (estadoData.turno) {
                 ventasEfectivoTotal = parseFloat(estadoData.turno.ventas_efectivo || 0);
                 ventasTransferenciaTotal = parseFloat(estadoData.turno.ventas_transferencia || 0);

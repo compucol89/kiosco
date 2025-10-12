@@ -16,9 +16,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'bd_conexion.php';
 
+// 🌍 CONFIGURAR ZONA HORARIA ARGENTINA
+date_default_timezone_set('America/Argentina/Buenos_Aires');
+
 try {
     $pdo = Conexion::obtenerConexion();
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Crear tabla si no existe
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS gastos_mensuales (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            mes_ano VARCHAR(7) NOT NULL COMMENT 'YYYY-MM',
+            gastos_totales DECIMAL(12,2) NOT NULL DEFAULT 0,
+            descripcion TEXT,
+            usuario_id INT,
+            activo BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_mes_ano (mes_ano),
+            KEY idx_activo (activo)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Gastos fijos mensuales para cálculos de utilidad neta'
+    ");
     
     $metodo = $_SERVER['REQUEST_METHOD'];
     $accion = $_GET['accion'] ?? '';
@@ -196,27 +215,50 @@ function configurarGastosMensuales($pdo) {
         throw new Exception('Los gastos no pueden ser negativos');
     }
     
-    // Desactivar gastos anteriores del mismo mes
-    $stmtDesactivar = $pdo->prepare("
-        UPDATE gastos_mensuales 
-        SET activo = 0, updated_at = CURRENT_TIMESTAMP 
-        WHERE mes_ano = ? AND activo = 1
-    ");
-    $stmtDesactivar->execute([$mesAno]);
+    $pdo->beginTransaction();
     
-    // Insertar nuevos gastos
-    $stmtInsertar = $pdo->prepare("
-        INSERT INTO gastos_mensuales (
-            mes_ano, 
-            gastos_totales, 
-            descripcion, 
-            usuario_id, 
-            activo
-        ) VALUES (?, ?, ?, ?, 1)
-    ");
-    $stmtInsertar->execute([$mesAno, $gastosTotales, $descripcion, $usuarioId]);
-    
-    $gastoId = $pdo->lastInsertId();
+    try {
+        // Verificar si ya existe un registro activo para este mes
+        $stmtCheck = $pdo->prepare("
+            SELECT id FROM gastos_mensuales 
+            WHERE mes_ano = ? AND activo = 1
+        ");
+        $stmtCheck->execute([$mesAno]);
+        $registroExistente = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+        
+        if ($registroExistente) {
+            // Si existe, actualizar el registro existente
+            $stmtUpdate = $pdo->prepare("
+                UPDATE gastos_mensuales 
+                SET gastos_totales = ?, 
+                    descripcion = ?, 
+                    usuario_id = ?,
+                    updated_at = CURRENT_TIMESTAMP 
+                WHERE id = ?
+            ");
+            $stmtUpdate->execute([$gastosTotales, $descripcion, $usuarioId, $registroExistente['id']]);
+            $gastoId = $registroExistente['id'];
+        } else {
+            // Si no existe, insertar nuevo registro
+            $stmtInsertar = $pdo->prepare("
+                INSERT INTO gastos_mensuales (
+                    mes_ano, 
+                    gastos_totales, 
+                    descripcion, 
+                    usuario_id, 
+                    activo
+                ) VALUES (?, ?, ?, ?, 1)
+            ");
+            $stmtInsertar->execute([$mesAno, $gastosTotales, $descripcion, $usuarioId]);
+            $gastoId = $pdo->lastInsertId();
+        }
+        
+        $pdo->commit();
+        
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
     
     // Calcular gastos diarios
     $diasMes = date('t', strtotime($mesAno . '-01'));

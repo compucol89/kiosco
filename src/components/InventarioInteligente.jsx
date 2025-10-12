@@ -4,12 +4,14 @@ import {
   Search, Edit, RefreshCw, AlertTriangle, TrendingUp,
   Package, DollarSign, Clock, BarChart3, PieChart, ShoppingCart,
   Bell, Brain, Lightbulb, ArrowUp, ArrowDown, Eye, Download,
-  AlertCircle, CheckCircle, XCircle
+  AlertCircle, CheckCircle, XCircle, Store
 } from 'lucide-react';
 import CONFIG from '../config/config';
 import { useAuth } from '../contexts/AuthContext';
 import InventarioIAService from '../services/inventarioIAService';
 import PedidosIAService from '../services/pedidosIAService';
+import GestionProveedores from './GestionProveedores';
+import PedidosInteligentes from './PedidosInteligentes';
 
 const InventarioInteligente = () => {
   const { currentUser } = useAuth();
@@ -26,7 +28,7 @@ const InventarioInteligente = () => {
   const [urgenciaFilter, setUrgenciaFilter] = useState('todos');
   
   // Estados de vista
-  const [vistaActual, setVistaActual] = useState('dashboard'); // dashboard, productos, alertas, pedidos, ia
+  const [vistaActual, setVistaActual] = useState('dashboard'); // dashboard, productos, alertas, proveedores, pedidos, ia
   const [sortField, setSortField] = useState('urgencia');
   const [sortDirection, setSortDirection] = useState('desc');
   
@@ -1228,9 +1230,10 @@ const InventarioInteligente = () => {
       <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
         {[
           { key: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-          { key: 'productos', label: 'Productos', icon: Package },
+          { key: 'productos', label: 'Stock', icon: Package },
+          { key: 'proveedores', label: 'Proveedores', icon: Store },
+          { key: 'pedidos', label: 'Pedidos IA', icon: ShoppingCart },
           { key: 'alertas', label: 'Alertas', icon: Bell },
-          { key: 'pedidos', label: 'Pedidos', icon: ShoppingCart },
           { key: 'ia', label: '🧠 Análisis IA', icon: Brain }
         ].map(({ key, label, icon: Icon }) => (
           <button
@@ -1251,6 +1254,13 @@ const InventarioInteligente = () => {
       {/* Contenido principal */}
       {vistaActual === 'dashboard' && renderDashboard()}
       {vistaActual === 'productos' && renderProductos()}
+      
+      {/* NUEVA: Vista de Proveedores */}
+      {vistaActual === 'proveedores' && <GestionProveedores />}
+      
+      {/* NUEVA: Vista de Pedidos Inteligentes */}
+      {vistaActual === 'pedidos' && <PedidosInteligentes />}
+      
       {vistaActual === 'alertas' && (
         <div className="text-center py-12">
           <Bell size={48} className="mx-auto text-gray-400 mb-4" />
@@ -1258,8 +1268,9 @@ const InventarioInteligente = () => {
           <p className="text-gray-600">Próximamente: Sistema avanzado de alertas inteligentes</p>
         </div>
       )}
-      {/* Vista de Pedidos con IA */}
-      {vistaActual === 'pedidos' && (
+      
+      {/* Vista de Pedidos ANTIGUA (remover después) */}
+      {vistaActual === 'pedidos_old' && (
         <div className="space-y-6">
           {/* Header del análisis IA de Pedidos */}
           <div className="bg-white p-6 rounded-lg shadow-md">

@@ -116,24 +116,25 @@ try {
     
     registrarError("Tablas disponibles: " . implode(", ", $todasLasTablas));
     
-    // *** TABLAS PROTEGIDAS - NUNCA SE BORRAN ***
+    // *** TABLAS PROTEGIDAS - NUNCA SE BORRAN (GARANTIZADO) ***
     $tablasProtegidas = [
-        'usuarios',         // Usuarios del sistema
-        'configuracion',    // Configuraciones del sistema
-        'security_logs',    // Logs de seguridad importantes
-        'permisos_roles'    // Sistema de permisos
+        'usuarios',                     // ✅ SIEMPRE protegido
+        'productos',                    // ✅ SIEMPRE protegido
+        'configuracion',                // ✅ SIEMPRE protegido
+        'security_logs',                // ✅ SIEMPRE protegido
+        'permisos_roles',               // ✅ SIEMPRE protegido
+        'proveedores',                  // ✅ SIEMPRE protegido
+        'seguridad_acceso',             // ✅ SIEMPRE protegido
+        'dispositivos_confiables',      // ✅ SIEMPRE protegido
+        'gastos_mensuales'              // ✅ SIEMPRE protegido (configuración)
     ];
     
     // Obtener opciones de eliminación del frontend
     $opciones = isset($data['opciones']) ? $data['opciones'] : [];
     
-    // Si NO se debe eliminar productos, agregarlo a tablas protegidas
-    if (!isset($opciones['eliminarProductos']) || !$opciones['eliminarProductos']) {
-        $tablasProtegidas[] = 'productos';
-        registrarError("Productos protegidos según opciones del usuario");
-    } else {
-        registrarError("Productos serán eliminados según opciones del usuario");
-    }
+    // 🔒 FORZAR: Productos y usuarios SIEMPRE protegidos
+    // Ignorar opción de eliminarProductos - productos NUNCA se eliminan
+    registrarError("🔒 PRODUCTOS Y USUARIOS PROTEGIDOS PERMANENTEMENTE (no se pueden eliminar)");
     
     // *** TABLAS DE BACKUP - SE BORRAN SIEMPRE (limpieza) ***
     $tablasBackup = [];
@@ -220,10 +221,12 @@ try {
             registrarError("Tabla de caja/financiero a eliminar: {$tabla}");
         }
         
+        // 🔒 PRODUCTOS NUNCA SE ELIMINAN - Ignorar esta opción
+        // Solo eliminar movimientos_inventario y auditoria, NO productos
         if (isset($opciones['eliminarProductos']) && $opciones['eliminarProductos'] && 
-            ($tabla === 'productos' || in_array($tabla, $categoriasTablas['inventario']))) {
+            in_array($tabla, $categoriasTablas['inventario']) && $tabla !== 'productos') {
             $debeEliminar = true;
-            registrarError("Tabla de productos/inventario a eliminar: {$tabla}");
+            registrarError("Tabla de inventario a eliminar: {$tabla}");
         }
         
         if (isset($opciones['eliminarClientes']) && $opciones['eliminarClientes'] && 

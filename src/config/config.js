@@ -16,7 +16,8 @@ const CONFIG = {
     PRODUCTOS: '/api/productos.php', // LEGACY: Para administración
     
     // ========== VENTAS ==========
-    VENTAS: '/api/ventas_reales.php',
+    VENTAS: '/api/reportes_financieros_precisos.php', // MODERN: API precisa con zona horaria correcta
+    VENTAS_LEGACY: '/api/ventas_reales.php', // DEPRECATED: No usa filtros correctos
     VENTAS_BACKUP: '/api/listar_ventas.php',
     VENTAS_FALLBACK: '/api/ventas_db.php',
     PROCESAR_VENTA: '/api/procesar_venta_ultra_rapida.php',

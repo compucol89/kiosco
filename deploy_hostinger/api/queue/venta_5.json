@@ -1,1 +1,0 @@
-{"venta_id":"5","timestamp":1758700479,"data":{"cliente":{"name":"Cliente 10K Efectivo","id":"0"},"paymentMethod":"efectivo","subtotal":10000,"discount":0,"total":10000,"cart":[{"id":675,"nombre":"Producto 10K","price":10000,"quantity":1}]},"numero_comprobante":"VNT-015","cliente_nombre":"Cliente 10K Efectivo","metodo_pago":"efectivo","monto_total":10000}

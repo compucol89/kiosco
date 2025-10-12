@@ -1,7 +1,7 @@
 // src/components/productos/hooks/useProductAnalysis.js
 // Hook para análisis de ventas y rendimiento de productos
 // Optimizado con memoización y carga bajo demanda
-// RELEVANT FILES: ProductosPage.jsx, api/ventas_reales.php
+// RELEVANT FILES: ProductosPage.jsx, api/reportes_financieros_precisos.php
 
 import { useState, useCallback } from 'react';
 import axios from 'axios';
@@ -17,24 +17,44 @@ export const useProductAnalysis = () => {
     cargando: false
   });
 
-  // ⚡ OPTIMIZACIÓN: Análisis de ventas con useCallback
+  // ⚡ OPTIMIZACIÓN: Análisis de ventas con useCallback - USANDO API MODERNA
   const cargarAnalisisVentas = useCallback(async (productoId, nombreProducto) => {
     setDatosVentas(prev => ({ ...prev, cargando: true }));
 
     try {
       console.log(`🔍 Analizando ventas para producto: ${nombreProducto} (ID: ${productoId})`);
       
-      // Cargar todas las ventas para análisis local
-      const response = await axios.get(`${CONFIG.API_URL}/api/ventas_reales.php?filtro=todo`);
+      // Cargar ventas del último mes usando API moderna precisa
+      const response = await axios.get(`${CONFIG.API_URL}/api/reportes_financieros_precisos.php?periodo=mes`);
       
-      if (response.data && response.data.success && Array.isArray(response.data.ventas)) {
-        const todasLasVentas = response.data.ventas;
+      if (response.data && response.data.success && Array.isArray(response.data.ventas_detalladas)) {
+        const todasLasVentas = response.data.ventas_detalladas;
         
-        // Filtrar ventas de este producto específico
-        const ventasDelProducto = todasLasVentas.filter(venta => 
-          venta.productos && 
-          venta.productos.some(p => p.id === productoId || p.nombre === nombreProducto)
-        );
+        // Filtrar ventas que contienen este producto específico
+        const ventasDelProducto = [];
+        todasLasVentas.forEach(venta => {
+          // Buscar en productos de la venta
+          let productos = venta.productos || [];
+          
+          // También revisar en cart si existe
+          if (!productos.length && venta.cart) {
+            productos = venta.cart;
+          }
+          
+          // Verificar si este producto está en la venta
+          const tieneProducto = productos.some(p => {
+            const id = p.id || p.producto_id;
+            const nombre = p.nombre || p.producto_nombre;
+            return id === productoId || nombre === nombreProducto;
+          });
+          
+          if (tieneProducto) {
+            ventasDelProducto.push({
+              fecha_venta: venta.fecha || venta.fecha_hora,
+              productos: productos
+            });
+          }
+        });
 
         // Calcular métricas temporales
         const ahora = new Date();
@@ -68,7 +88,8 @@ export const useProductAnalysis = () => {
           ventasUltimos7Dias,
           ventasUltimos30Dias,
           promedioMensual,
-          rotacionEstimada
+          rotacionEstimada,
+          totalVentasEncontradas: ventasDelProducto.length
         });
       } else {
         throw new Error('No se pudieron cargar los datos de ventas');

@@ -5,6 +5,9 @@ import permisosService from '../services/permisosService';
 import seguridadInventarioService from '../services/seguridadInventarioService';
 import descuentosService from '../services/descuentosService';
 import ConfiguracionFacturacion from './ConfiguracionFacturacion';
+import GestionPermisos from './GestionPermisos';
+import SeguridadAcceso from './SeguridadAcceso';
+import GestionDispositivos from './GestionDispositivos';
 // import CONFIG from '../config/config'; // Comentado temporalmente - no utilizado
 import { 
   Settings, 
@@ -319,41 +322,38 @@ const ReinicioModal = ({
               label="💳 Registros de Caja y Finanzas"
               checked={opciones.eliminarCaja}
               onChange={() => setOpciones(prev => ({ ...prev, eliminarCaja: !prev.eliminarCaja }))}
-              description="Eliminará movimientos de caja, egresos, gastos fijos, ingresos extra y reportes financieros"
+              description="Eliminará movimientos de caja, turnos, egresos, ingresos extra y reportes financieros"
             />
             
             <CheckboxField
-              label="📦 Productos e Inventario"
+              label="📦 Movimientos de Inventario"
               checked={opciones.eliminarProductos}
               onChange={() => setOpciones(prev => ({ ...prev, eliminarProductos: !prev.eliminarProductos }))}
-              description={
-                <span className={opciones.eliminarProductos ? 'text-red-600 font-medium' : ''}>
-                  {opciones.eliminarProductos 
-                    ? '⚠️ Se eliminarán productos, movimientos de inventario y auditorías' 
-                    : '✅ Se conservarán por defecto (recomendado)'
-                  }
-                </span>
-              }
+              description="Eliminará movimientos y auditorías de inventario. ✅ Los productos se conservan siempre"
             />
             
             <CheckboxField
-              label="👥 Base de Datos de Clientes"
+              label="👥 Clientes y Proveedores"
               checked={opciones.eliminarClientes}
               onChange={() => setOpciones(prev => ({ ...prev, eliminarClientes: !prev.eliminarClientes }))}
-              description="Eliminará información de clientes y proveedores"
+              description="Eliminará información de clientes. ✅ Proveedores se conservan siempre"
             />
           </div>
 
           {/* Información adicional sobre tablas protegidas */}
           <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
             <h4 className="text-sm font-medium text-green-800 mb-2">
-              🔒 Datos que SIEMPRE se protegen:
+              🔒 Datos que SIEMPRE se protegen (GARANTIZADO):
             </h4>
             <ul className="text-sm text-green-700 space-y-1">
-              <li>• Usuarios y roles del sistema</li>
-              <li>• Configuraciones generales</li>
-              <li>• Logs de seguridad</li>
-              <li>• Permisos y roles</li>
+              <li>• ✅ Usuarios y roles del sistema</li>
+              <li>• ✅ Productos del inventario</li>
+              <li>• ✅ Proveedores configurados</li>
+              <li>• ✅ Configuraciones generales</li>
+              <li>• ✅ Permisos y roles</li>
+              <li>• ✅ Gastos fijos mensuales</li>
+              <li>• ✅ Dispositivos confiables</li>
+              <li>• ✅ Seguridad de acceso</li>
             </ul>
           </div>
 
@@ -413,13 +413,6 @@ const ConfiguracionPage = () => {
   const [confirmarReinicio, setConfirmarReinicio] = useState('');
   const [reiniciando, setReiniciando] = useState(false);
   const [saveNotification, setSaveNotification] = useState(null);
-  
-  // Estados para gestión de permisos
-  const [permisos, setPermisos] = useState({});
-  const [modulosInfo, setModulosInfo] = useState({});
-  const [rolesDisponibles, setRolesDisponibles] = useState([]);
-  const [loadingPermisos, setLoadingPermisos] = useState(false);
-  const [guardandoPermisos, setGuardandoPermisos] = useState(false);
   
   // Estados para seguridad del inventario
   const [seguridadInventario, setSeguridadInventario] = useState({
@@ -520,68 +513,8 @@ const ConfiguracionPage = () => {
     }
   };
 
-  // Funciones para gestión de permisos
-  const cargarPermisos = async () => {
-    setLoadingPermisos(true);
-    try {
-      const resultado = await permisosService.obtenerPermisos();
-      if (resultado.success) {
-        setPermisos(resultado.permisos);
-        setModulosInfo(resultado.modulos);
-        setRolesDisponibles(resultado.roles);
-      } else {
-        mostrarNotificacion('Error al cargar permisos: ' + resultado.message, 'error');
-      }
-    } catch (error) {
-      mostrarNotificacion('Error al cargar permisos', 'error');
-    } finally {
-      setLoadingPermisos(false);
-    }
-  };
-
-  const guardarPermisos = async () => {
-    // Validar permisos antes de guardar
-    const validacion = permisosService.validarPermisos(permisos);
-    if (!validacion.valido) {
-      mostrarNotificacion(`Error de validación: ${validacion.errores[0]}`, 'error');
-      return;
-    }
-
-    setGuardandoPermisos(true);
-    try {
-      const resultado = await permisosService.actualizarPermisos(permisos);
-      if (resultado.success) {
-        mostrarNotificacion('Permisos actualizados correctamente', 'success');
-      } else {
-        mostrarNotificacion('Error al guardar permisos: ' + resultado.message, 'error');
-      }
-    } catch (error) {
-      mostrarNotificacion('Error al guardar permisos', 'error');
-    } finally {
-      setGuardandoPermisos(false);
-    }
-  };
-
-  const cambiarPermiso = (rol, modulo, valor) => {
-    setPermisos(prev => ({
-      ...prev,
-      [rol]: {
-        ...prev[rol],
-        [modulo]: valor
-      }
-    }));
-  };
-
-  const resetearPermisosDefecto = () => {
-    if (window.confirm('¿Está seguro de resetear todos los permisos a los valores por defecto? Esta acción no se puede deshacer.')) {
-      setPermisos(permisosService.getPermisosDefecto());
-      mostrarNotificacion('Permisos reseteados a valores por defecto', 'success');
-    }
-  };
-
-  // Cargar permisos al inicializar
+  // Cargar configuraciones al inicializar
   useEffect(() => {
-    cargarPermisos();
     cargarConfiguracionSeguridad();
     cargarDescuentos();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1030,112 +963,14 @@ const ConfiguracionPage = () => {
             </div>
           </div>
 
-          {/* Gestión de Permisos de Usuario */}
-          <SectionCard
-            title="Gestión de Permisos de Usuario"
-            description="Configure qué módulos pueden acceder cada tipo de usuario"
-            icon={ShieldCheck}
-            variant="warning"
-          >
-            {loadingPermisos ? (
-              <div className="flex items-center justify-center py-8">
-                <RefreshCw className="w-6 h-6 animate-spin text-blue-500 mr-2" />
-                <span className="text-gray-600">Cargando permisos...</span>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                  <div className="flex">
-                    <ShieldCheck className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                    <div className="ml-3">
-                      <h4 className="text-sm font-medium text-blue-800">
-                        Personalice los permisos por rol
-                      </h4>
-                      <p className="mt-1 text-sm text-blue-700">
-                        Configure exactamente qué módulos puede acceder cada tipo de usuario. 
-                        Los cambios se aplicarán inmediatamente a todos los usuarios con ese rol.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+          {/* Gestión de Permisos de Usuario - MÓDULO VISUAL MODERNO */}
+          <GestionPermisos />
 
-                {/* Tabla de permisos */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Módulo
-                        </th>
-                        {rolesDisponibles.map(rol => (
-                          <th key={rol} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            {rol === 'admin' ? 'Administrador' : 
-                             rol === 'vendedor' ? 'Vendedor' : 
-                             rol === 'cajero' ? 'Cajero' : rol}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {Object.keys(modulosInfo).map(modulo => (
-                        <tr key={modulo} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {modulosInfo[modulo].nombre}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {modulosInfo[modulo].descripcion}
-                              </div>
-                            </div>
-                          </td>
-                          {rolesDisponibles.map(rol => (
-                            <td key={`${rol}-${modulo}`} className="px-6 py-4 whitespace-nowrap text-center">
-                              <input
-                                type="checkbox"
-                                checked={permisos[rol]?.[modulo] || false}
-                                onChange={(e) => cambiarPermiso(rol, modulo, e.target.checked)}
-                                disabled={rol === 'admin' && modulo === 'Inicio'} // Admin siempre debe tener acceso a Inicio
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                              />
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+          {/* Seguridad de Acceso por IP */}
+          <SeguridadAcceso />
 
-                {/* Botones de acción */}
-                <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                  <Button
-                    variant="outline"
-                    onClick={resetearPermisosDefecto}
-                    icon={RotateCcw}
-                  >
-                    Resetear a valores por defecto
-                  </Button>
-                  <div className="space-x-3">
-                    <Button
-                      variant="outline"
-                      onClick={cargarPermisos}
-                      icon={RefreshCw}
-                    >
-                      Recargar
-                    </Button>
-                    <Button
-                      variant="success"
-                      onClick={guardarPermisos}
-                      loading={guardandoPermisos}
-                      icon={Save}
-                    >
-                      Guardar Permisos
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </SectionCard>
+          {/* Gestión de Dispositivos Confiables */}
+          <GestionDispositivos />
 
           {/* Seguridad del Inventario */}
           <SectionCard

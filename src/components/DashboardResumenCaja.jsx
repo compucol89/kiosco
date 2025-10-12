@@ -46,22 +46,46 @@ const DashboardResumenCaja = () => {
       ayer.setDate(hoy.getDate() - 1);
       const fechaAyer = ayer.toISOString().split('T')[0];
 
-      // Obtener todos los datos necesarios
-      const [estadoCaja, historialReciente, ventasHoy, ventasAyer, productosTop] = await Promise.all([
+      // Obtener todos los datos necesarios - USANDO API MODERNA PRECISA
+      const [estadoCaja, historialReciente, reporteHoy, reporteAyer, productosTop] = await Promise.all([
         fetch(`${CONFIG.API_URL}/api/pos_status.php?_t=${Date.now()}`).then(r => r.json()),
         fetch(`${CONFIG.API_URL}/api/gestion_caja_completa.php?accion=historial_completo&usuario_id=1&limite=10&_t=${Date.now()}`).then(r => r.json()),
-        fetch(`${CONFIG.API_URL}/api/ventas_reales.php?filtro=hoy&_t=${Date.now()}`).then(r => r.json()),
-        fetch(`${CONFIG.API_URL}/api/ventas_reales.php?filtro=fecha&fecha=${fechaAyer}&_t=${Date.now()}`).then(r => r.json()).catch(() => ({ success: false, items: [] })),
+        fetch(`${CONFIG.API_URL}/api/reportes_financieros_precisos.php?periodo=hoy&_t=${Date.now()}`).then(r => r.json()),
+        fetch(`${CONFIG.API_URL}/api/reportes_financieros_precisos.php?periodo=ayer&_t=${Date.now()}`).then(r => r.json()).catch(() => ({ success: false, ventas_detalladas: [] })),
         fetch(`${CONFIG.API_URL}/api/productos_pos_optimizado.php?_t=${Date.now()}`).then(r => r.json()).catch(() => ({ success: false, productos: [] }))
       ]);
 
-      if (estadoCaja.success && historialReciente.success && ventasHoy.success) {
+      if (estadoCaja.success && historialReciente.success && reporteHoy.success) {
+        // Convertir datos del reporte preciso al formato esperado por el Dashboard
+        const ventasHoy = (reporteHoy.ventas_detalladas || []).map(venta => ({
+          ...venta,
+          // Mapear campos del formato nuevo al formato esperado
+          monto_total: venta.resumen?.monto_total_registrado || venta.monto_total || 0,
+          fecha: venta.fecha || venta.fecha_hora,
+          metodo_pago: venta.metodo_pago,
+          detalles_json: venta.detalles_json || JSON.stringify({ cart: venta.productos || [] }),
+          productos: venta.productos || [],
+          cart: venta.productos || []
+        }));
+        
+        const ventasAyer = reporteAyer.success ? (reporteAyer.ventas_detalladas || []).map(venta => ({
+          ...venta,
+          monto_total: venta.resumen?.monto_total_registrado || venta.monto_total || 0,
+          fecha: venta.fecha || venta.fecha_hora
+        })) : [];
+        
+        console.log('📊 Ventas procesadas:', {
+          cantidadHoy: ventasHoy.length,
+          primeraVenta: ventasHoy[0],
+          totalVentas: ventasHoy.reduce((sum, v) => sum + parseFloat(v.monto_total || 0), 0)
+        });
+        
         setDatosResumen({
           estadoActual: estadoCaja,
           historial: historialReciente.historial || [],
           estadisticas: historialReciente.estadisticas || {},
-          ventasDelDia: ventasHoy.items || [],
-          ventasAyer: ventasAyer.success ? ventasAyer.items || [] : [],
+          ventasDelDia: ventasHoy,
+          ventasAyer: ventasAyer,
           productosDisponibles: productosTop.success ? productosTop.productos || [] : []
         });
       } else {
@@ -156,7 +180,7 @@ const DashboardResumenCaja = () => {
 
     // ⏰ Calcular métricas de tiempo
     const ahora = new Date();
-    const ultimaVenta = ventasDelDia.length > 0 ? new Date(ventasDelDia[0].fecha) : null;
+    const ultimaVenta = ventasDelDia.length > 0 ? new Date(ventasDelDia[0].fecha || ventasDelDia[0].fecha_hora) : null;
     const minutosDesdeUltimaVenta = ultimaVenta ? Math.floor((ahora - ultimaVenta) / (1000 * 60)) : null;
     
     // 📈 Calcular ventas por hora
@@ -177,23 +201,37 @@ const DashboardResumenCaja = () => {
     const productosVendidos = {};
     ventasDelDia.forEach(venta => {
       try {
-        const detalles = JSON.parse(venta.detalles_json || '{}');
-        if (detalles.cart) {
-          detalles.cart.forEach(item => {
-            if (!productosVendidos[item.id]) {
-              productosVendidos[item.id] = {
-                id: item.id,
-                nombre: item.nombre,
-                cantidad: 0,
-                monto: 0
-              };
-            }
-            productosVendidos[item.id].cantidad += item.quantity || 1;
-            productosVendidos[item.id].monto += (item.price || 0) * (item.quantity || 1);
-          });
+        // Intentar obtener productos desde varias fuentes posibles
+        let productos = venta.productos || [];
+        
+        if (!productos.length && venta.detalles_json) {
+          const detalles = JSON.parse(venta.detalles_json || '{}');
+          productos = detalles.cart || detalles.productos || [];
         }
+        
+        if (!productos.length && venta.cart) {
+          productos = venta.cart;
+        }
+        
+        productos.forEach(item => {
+          const id = item.id || item.producto_id;
+          const nombre = item.nombre || item.producto_nombre || 'Producto';
+          const cantidad = parseInt(item.cantidad || item.quantity || 1);
+          const precio = parseFloat(item.precio_venta_unitario || item.price || 0);
+          
+          if (!productosVendidos[id]) {
+            productosVendidos[id] = {
+              id: id,
+              nombre: nombre,
+              cantidad: 0,
+              monto: 0
+            };
+          }
+          productosVendidos[id].cantidad += cantidad;
+          productosVendidos[id].monto += precio * cantidad;
+        });
       } catch (e) {
-        // JSON malformado, ignorar
+        console.error('Error procesando productos de venta:', e);
       }
     });
 
@@ -204,7 +242,7 @@ const DashboardResumenCaja = () => {
     // 👥 Performance por cajero actual
     const cajeroActual = turnoActual?.cajero_nombre || 'N/A';
     const ventasCajeroHoy = ventasDelDia.filter(v => {
-      const fechaVenta = new Date(v.fecha);
+      const fechaVenta = new Date(v.fecha || v.fecha_hora);
       return turnoActual && fechaVenta >= new Date(turnoActual.fecha_hora);
     });
     const performanceCajero = {
