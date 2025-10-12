@@ -881,7 +881,7 @@ const FormularioMovimientosMejorado = ({ onMovimientoRegistrado }) => {
   const [loading, setLoading] = useState(false);
 
   const categorias = {
-    ingreso: ['Venta Efectivo', 'Depósito', 'Ajuste Positivo', 'Devolución', 'Otros Ingresos'],
+    ingreso: ['Depósito', 'Ajuste Positivo', 'Devolución', 'Ingresos Varios'],
     egreso: ['Mercadería', 'Retiro Efectivo', 'Pago Servicios', 'Gastos Varios', 'Otros Egresos']
   };
 
