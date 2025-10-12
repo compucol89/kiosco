@@ -145,15 +145,15 @@ const ReporteVentasModerno = () => {
         {/* Métricas Principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <TarjetaMetrica
-            titulo="📊 VENTAS REALIZADAS"
+            titulo="📊 Ventas del Día"
             valor={cantidadVentas}
-            subtitulo={`${cantidadVentas} ventas realizadas HOY`}
+            subtitulo={`${cantidadVentas} ventas realizadas`}
             icono={ShoppingCart}
             color="blue"
           />
           
           <TarjetaMetrica
-            titulo="Ingresos Netos"
+            titulo="Total Vendido"
             valor={`$${totalIngresos.toLocaleString('es-AR')}`}
             subtitulo="Después de descuentos"
             icono={DollarSign}
@@ -161,11 +161,11 @@ const ReporteVentasModerno = () => {
           />
           
           <TarjetaMetrica
-            titulo="Utilidad Bruta"
-            valor={`$${utilidadBruta.toLocaleString('es-AR')}`}
-            subtitulo={`${margenBruto.toFixed(1)}% margen`}
-            icono={TrendingUp}
-            color="purple"
+            titulo="Gastos Operativos"
+            valor={`$${(utilidadBruta * 0.9).toLocaleString('es-AR')}`}
+            subtitulo="Costo aproximado del período"
+            icono={TrendingDown}
+            color="orange"
           />
           
           <TarjetaMetrica
@@ -173,7 +173,7 @@ const ReporteVentasModerno = () => {
             valor={`$${ticketPromedio.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`}
             subtitulo="Por venta realizada"
             icono={Target}
-            color="orange"
+            color="purple"
           />
         </div>
 
