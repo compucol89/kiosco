@@ -1,19 +1,14 @@
-# Archivos de configuración sensibles de Base de Datos
+# Solo excluir archivos de configuración de BD (sensibles)
 api/db_config.php
 api/bd_conexion.php
 
-# Node modules (muy pesado)
+# Node modules (demasiado pesado, no necesario en producción)
 node_modules/
 
 # Archivos del sistema
 .DS_Store
 Thumbs.db
-*.log
 
 # IDE
 .vscode/
 .idea/
-
-# Archivos temporales
-*.tmp
-*.temp
