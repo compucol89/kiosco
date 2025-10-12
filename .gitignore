@@ -1,19 +1,19 @@
-# Backend (secretos / runtime)
+# Archivos de configuración sensibles de Base de Datos
 api/db_config.php
 api/bd_conexion.php
-api/config_facturacion.php
-api/configuracion_empresarial.php
-api/certs/
-api/logs/
-api/*.log
-.env
-.env.*
 
-# Node / editor
+# Node modules (muy pesado)
 node_modules/
-dist/
-.DS_Store
-*.map
 
-# Quita "build/" si querés versionarlo
-build/
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Archivos temporales
+*.tmp
+*.temp
