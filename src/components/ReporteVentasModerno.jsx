@@ -224,37 +224,82 @@ const ReporteVentasModerno = () => {
           </div>
         )}
 
-        {/* Estado del Negocio */}
-        <div className={`rounded-xl p-6 border-2 ${
-          resumen.estado_negocio === 'GANANDO' ? 'bg-green-50 border-green-200' :
-          resumen.estado_negocio === 'EQUILIBRIO' ? 'bg-yellow-50 border-yellow-200' :
-          'bg-red-50 border-red-200'
-        }`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className={`text-2xl font-bold ${
-                resumen.estado_negocio === 'GANANDO' ? 'text-green-800' :
-                resumen.estado_negocio === 'EQUILIBRIO' ? 'text-yellow-800' :
-                'text-red-800'
-              }`}>
-                {resumen.estado_negocio === 'GANANDO' ? '📈' : 
-                 resumen.estado_negocio === 'EQUILIBRIO' ? '⚖️' : '📉'} 
-                {resumen.estado_negocio || 'EVALUANDO'}
-              </h3>
-              <p className="text-lg mt-2">
-                <strong>Utilidad Neta:</strong> ${parseFloat(resumen.utilidad_neta || 0).toLocaleString('es-AR')}
-              </p>
-              <p className="text-sm mt-1">
-                <strong>Margen:</strong> {(parseFloat(resumen.margen_neto_porcentaje || 0)).toFixed(1)}% | 
-                <strong> ROI:</strong> {(parseFloat(resumen.roi_neto_porcentaje || 0)).toFixed(1)}%
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-blue-600">
-                ${parseFloat(resumen.utilidad_por_venta || 0).toLocaleString('es-AR')}
-              </div>
-              <div className="text-sm text-gray-600">Utilidad por Venta</div>
-            </div>
+        {/* Lista Detallada de Ventas */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center">
+              <ShoppingCart className="w-5 h-5 mr-2 text-blue-600" />
+              📋 Detalle de Ventas Realizadas
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Todas las ventas del período seleccionado
+            </p>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">ID Venta</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Fecha/Hora</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase">Productos</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Valor Venta</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase">Descuento</th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-gray-600 uppercase">Método Pago</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {ventasDetalladas && ventasDetalladas.length > 0 ? (
+                  ventasDetalladas.map((venta, index) => {
+                    const productos = venta.productos || venta.cart || [];
+                    const productosTexto = productos.length > 0 
+                      ? productos.map(p => `${p.nombre || p.producto_nombre} (${p.cantidad})`).join(', ')
+                      : 'Sin detalles';
+                    
+                    return (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm font-mono text-gray-900">
+                          #{venta.id || venta.venta_id}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {new Date(venta.fecha).toLocaleString('es-AR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate" title={productosTexto}>
+                          {productosTexto}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold text-green-600">
+                          ${parseFloat(venta.monto_total || 0).toLocaleString('es-AR')}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-orange-600">
+                          ${parseFloat(venta.descuento || 0).toLocaleString('es-AR')}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                            venta.metodo_pago === 'efectivo' ? 'bg-green-100 text-green-800' :
+                            venta.metodo_pago === 'transferencia' ? 'bg-blue-100 text-blue-800' :
+                            venta.metodo_pago === 'tarjeta' ? 'bg-purple-100 text-purple-800' :
+                            'bg-orange-100 text-orange-800'
+                          }`}>
+                            {venta.metodo_pago}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                      No hay ventas en este período
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
