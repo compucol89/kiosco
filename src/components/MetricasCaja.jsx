@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 // 🎨 COMPONENTE: Tarjeta de métrica individual
-const TarjetaMetrica = ({ titulo, valor, subtitulo, icono: IconComponent, color, prefijo = '$' }) => {
+const TarjetaMetrica = ({ titulo, valor, subtitulo, icono: IconComponent, color, prefijo = '$', formula }) => {
   const estilos = {
     'green': 'bg-gradient-to-br from-green-50 to-green-100 border-green-200 text-green-800',
     'blue': 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 text-blue-800',
@@ -60,7 +60,12 @@ const TarjetaMetrica = ({ titulo, valor, subtitulo, icono: IconComponent, color,
         <p className="text-3xl font-bold mb-2">
           {formatearValor(valor)}
         </p>
-        <p className="text-xs opacity-70 leading-relaxed">{subtitulo}</p>
+        <p className="text-xs opacity-70 leading-relaxed mb-2">{subtitulo}</p>
+        {formula && (
+          <div className="mt-3 pt-3 border-t border-current opacity-50">
+            <p className="text-xs font-mono leading-relaxed">{formula}</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -84,6 +89,7 @@ export const MetricasEfectivo = ({ flujoEfectivo, efectivoEsperado, metricas }) 
           subtitulo="Monto de apertura del turno"
           icono={Calculator}
           color="blue"
+          formula="💵 Lo que pusiste al abrir la caja. Base para calcular el efectivo esperado"
         />
         
         <TarjetaMetrica
@@ -92,6 +98,7 @@ export const MetricasEfectivo = ({ flujoEfectivo, efectivoEsperado, metricas }) 
           subtitulo="Ventas + ingresos manuales"
           icono={TrendingUp}
           color="green"
+          formula="📈 Cálculo: Ventas en Efectivo + Depósitos + Ajustes Positivos + Ingresos Varios"
         />
         
         <TarjetaMetrica
@@ -100,6 +107,7 @@ export const MetricasEfectivo = ({ flujoEfectivo, efectivoEsperado, metricas }) 
           subtitulo="Egresos y retiros del turno"
           icono={TrendingUp}
           color="red"
+          formula="📉 Cálculo: Retiros + Pagos + Gastos Varios = Todo lo que salió de caja"
         />
         
         <TarjetaMetrica
@@ -108,6 +116,7 @@ export const MetricasEfectivo = ({ flujoEfectivo, efectivoEsperado, metricas }) 
           subtitulo="Lo que deberías tener en caja"
           icono={Calculator}
           color="purple"
+          formula="🎯 Cálculo: Efectivo Inicial + Entradas - Salidas = Lo que DEBE estar en caja"
         />
       </div>
     </div>
@@ -132,6 +141,7 @@ export const MetricosMetodosPago = ({ resumenVentas }) => {
           subtitulo={`${resumenVentas.porcentajes.efectivo.toFixed(1)}% del total`}
           icono={Banknote}
           color="green"
+          formula="💵 Ventas cobradas en efectivo. IMPORTANTE: Este dinero debe estar físicamente en caja"
         />
         
         <TarjetaMetrica
@@ -140,6 +150,7 @@ export const MetricosMetodosPago = ({ resumenVentas }) => {
           subtitulo={`${resumenVentas.porcentajes.transferencia.toFixed(1)}% del total`}
           icono={ArrowRightLeft}
           color="blue"
+          formula="🏦 Ventas por transferencia bancaria. Verificar que ingresaron a la cuenta del negocio"
         />
         
         <TarjetaMetrica
@@ -148,6 +159,7 @@ export const MetricosMetodosPago = ({ resumenVentas }) => {
           subtitulo={`${resumenVentas.porcentajes.tarjeta.toFixed(1)}% del total`}
           icono={CreditCard}
           color="purple"
+          formula="💳 Ventas con tarjeta crédito/débito. Se acreditan en 24-48hs (depende del banco)"
         />
         
         <TarjetaMetrica
@@ -156,6 +168,7 @@ export const MetricosMetodosPago = ({ resumenVentas }) => {
           subtitulo={`${resumenVentas.porcentajes.qr.toFixed(1)}% del total`}
           icono={QrCode}
           color="orange"
+          formula="📱 Ventas con código QR (MercadoPago, etc). Acreditación inmediata en app"
         />
       </div>
     </div>
@@ -181,6 +194,7 @@ export const MetricasRendimiento = ({ metricas, tiempoTurno, resumenVentas }) =>
           icono={Clock}
           color="indigo"
           prefijo=""
+          formula="⏱️ Tiempo desde que abriste la caja hasta ahora. Ayuda a medir productividad"
         />
         
         <TarjetaMetrica
@@ -189,6 +203,7 @@ export const MetricasRendimiento = ({ metricas, tiempoTurno, resumenVentas }) =>
           subtitulo="Ritmo promedio de ventas"
           icono={TrendingUp}
           color="green"
+          formula="📊 Cálculo: Total Vendido ÷ Horas Transcurridas = Promedio de ventas por hora"
         />
         
         <TarjetaMetrica
@@ -197,6 +212,7 @@ export const MetricasRendimiento = ({ metricas, tiempoTurno, resumenVentas }) =>
           subtitulo="Ventas totales del turno"
           icono={Calculator}
           color="blue"
+          formula="💰 Suma de TODAS las ventas (efectivo + transferencia + tarjeta + QR)"
         />
       </div>
     </div>

@@ -38,7 +38,7 @@ import CONFIG from '../config/config';
 
 const ReporteVentasModerno = () => {
   const { user } = useAuth();
-  const [pestanaActiva, setPestanaActiva] = useState('resumen'); // 'resumen', 'productos', 'metodos', 'ia', 'turnos'
+  const [pestanaActiva, setPestanaActiva] = useState('resumen'); // 'resumen', 'metodos', 'ia', 'turnos'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [periodo, setPeriodo] = useState('hoy');
@@ -47,6 +47,22 @@ const ReporteVentasModerno = () => {
   const [datos, setDatos] = useState(null);
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [turnosDelPeriodo, setTurnosDelPeriodo] = useState([]);
+  const [productosMasVendidos, setProductosMasVendidos] = useState([]);
+
+  // 🔄 CARGAR PRODUCTOS MÁS VENDIDOS
+  const cargarProductosMasVendidos = async () => {
+    try {
+      const fecha = periodo === 'hoy' ? new Date().toISOString().split('T')[0] : '';
+      const response = await fetch(`${CONFIG.API_URL}/api/dashboard_stats.php?fecha=${fecha}`);
+      const data = await response.json();
+      
+      if (data.success && data.productos_mas_vendidos) {
+        setProductosMasVendidos(data.productos_mas_vendidos);
+      }
+    } catch (error) {
+      console.error('Error cargando productos más vendidos:', error);
+    }
+  };
 
   // 🔄 CARGAR DATOS OPTIMIZADO
   const cargarDatos = useCallback(async () => {
@@ -62,6 +78,9 @@ const ReporteVentasModerno = () => {
       
       const response = await reportesService.obtenerDatosContables(parametros);
       setDatos(response);
+      
+      // Cargar Top 10 productos más vendidos
+      await cargarProductosMasVendidos();
     } catch (err) {
       console.error('Error cargando reportes:', err);
       setError(err.message || 'Error al cargar los datos');
@@ -130,7 +149,7 @@ const ReporteVentasModerno = () => {
   );
 
   // 🎯 COMPONENTE: Dashboard de resumen
-  const DashboardResumen = ({ resumen, metodos }) => {
+  const DashboardResumen = ({ resumen, metodos, productosMasVendidosData }) => {
     if (!resumen) return null;
 
     // 🔧 CORRECCIÓN: Calcular valores reales desde los datos del backend
@@ -224,6 +243,67 @@ const ReporteVentasModerno = () => {
           </div>
         )}
 
+        {/* Top 10 Productos Más Vendidos */}
+        {productosMasVendidosData && productosMasVendidosData.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center">
+                <Package className="w-5 h-5 mr-2 text-purple-600" />
+                🏆 Top 10 Productos Más Vendidos
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Los productos con mayor demanda en los últimos 7 días
+              </p>
+            </div>
+            
+            <div className="p-6">
+              <div className="space-y-3">
+                {productosMasVendidosData.slice(0, 10).map((producto, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center space-x-4 flex-1">
+                      <div className={`w-10 h-10 flex items-center justify-center rounded-full font-bold text-white ${
+                        index === 0 ? 'bg-yellow-500' :
+                        index === 1 ? 'bg-gray-400' :
+                        index === 2 ? 'bg-amber-600' :
+                        'bg-blue-500'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800 text-sm">
+                          {producto.producto_nombre || producto.nombre}
+                        </h4>
+                        {producto.categoria && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            📦 {producto.categoria}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-6">
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-purple-600">
+                          {producto.cantidad_vendida}
+                        </p>
+                        <p className="text-xs text-gray-500">unidades</p>
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className="text-lg font-semibold text-green-600">
+                          ${parseFloat(producto.total_vendido || 0).toLocaleString('es-AR')}
+                        </p>
+                        <p className="text-xs text-gray-500">total vendido</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Lista Detallada de Ventas */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
@@ -298,109 +378,6 @@ const ReporteVentasModerno = () => {
                     </td>
                   </tr>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // 📊 COMPONENTE: Análisis de productos
-  const AnalisisProductos = ({ ventasDetalladas }) => {
-    if (!ventasDetalladas || ventasDetalladas.length === 0) {
-      return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-          <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">No hay datos de productos</h3>
-          <p className="text-gray-500">No se encontraron ventas detalladas en el período seleccionado</p>
-        </div>
-      );
-    }
-
-    // Procesar productos más vendidos
-    const productosMap = {};
-    ventasDetalladas.forEach(venta => {
-      venta.productos?.forEach(producto => {
-        const key = producto.codigo_barras || producto.nombre;
-        if (!productosMap[key]) {
-          productosMap[key] = {
-            nombre: producto.nombre,
-            codigo: producto.codigo_barras,
-            cantidad: 0,
-            ingresos: 0,
-            utilidad: 0
-          };
-        }
-        productosMap[key].cantidad += parseInt(producto.cantidad || 1);
-        productosMap[key].ingresos += parseFloat(producto.precio_final || 0);
-        productosMap[key].utilidad += parseFloat(producto.utilidad || 0);
-      });
-    });
-
-    const productosOrdenados = Object.values(productosMap)
-      .sort((a, b) => b.ingresos - a.ingresos)
-      .slice(0, 10);
-
-    return (
-      <div className="space-y-6">
-        {/* Top 10 Productos */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-            <Package className="w-6 h-6 mr-3 text-blue-600" />
-            Top 10 Productos Más Vendidos
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ingresos</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Utilidad</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Margen</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {productosOrdenados.map((producto, index) => {
-                  const margen = producto.ingresos > 0 ? (producto.utilidad / producto.ingresos) * 100 : 0;
-                  return (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                          index === 0 ? 'bg-yellow-500' : 
-                          index === 1 ? 'bg-gray-400' : 
-                          index === 2 ? 'bg-orange-500' : 'bg-blue-500'
-                        }`}>
-                          {index + 1}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{producto.nombre}</div>
-                          <div className="text-xs text-gray-500">{producto.codigo}</div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 font-semibold">{producto.cantidad}</td>
-                      <td className="px-4 py-3 text-sm text-green-600 font-semibold">
-                        ${(producto.ingresos || 0).toLocaleString('es-AR')}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-blue-600 font-semibold">
-                        ${(producto.utilidad || 0).toLocaleString('es-AR')}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          margen >= 30 ? 'bg-green-100 text-green-800' :
-                          margen >= 15 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {margen.toFixed(1)}%
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
               </tbody>
             </table>
           </div>
@@ -854,17 +831,6 @@ const ReporteVentasModerno = () => {
                 Resumen General
               </button>
               <button
-                onClick={() => setPestanaActiva('productos')}
-                className={`${
-                  pestanaActiva === 'productos'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-              >
-                <Package className="w-4 h-4" />
-                Análisis de Productos
-              </button>
-              <button
                 onClick={() => setPestanaActiva('metodos')}
                 className={`${
                   pestanaActiva === 'metodos'
@@ -903,11 +869,11 @@ const ReporteVentasModerno = () => {
 
         {/* Contenido de las pestañas */}
         {pestanaActiva === 'resumen' && (
-          <DashboardResumen resumen={resumenGeneral} metodos={metodosPago} />
-        )}
-        
-        {pestanaActiva === 'productos' && (
-          <AnalisisProductos ventasDetalladas={ventasDetalladas} />
+          <DashboardResumen 
+            resumen={resumenGeneral} 
+            metodos={metodosPago} 
+            productosMasVendidosData={productosMasVendidos}
+          />
         )}
         
         {pestanaActiva === 'metodos' && (

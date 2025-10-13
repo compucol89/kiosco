@@ -23,7 +23,7 @@ import { useAuth } from '../contexts/AuthContext';
 import CONFIG from '../config/config';
 
 // ========== COMPONENTE TARJETA INFORMATIVA ==========
-const TarjetaInformativa = ({ titulo, valorPrincipal, subtitulo, icono, color, prefijo = '$' }) => {
+const TarjetaInformativa = ({ titulo, valorPrincipal, subtitulo, icono, color, prefijo = '$', formula }) => {
   const IconComponent = {
     'trending-up': TrendingUp,
     'trending-down': TrendingDown,
@@ -71,7 +71,12 @@ const TarjetaInformativa = ({ titulo, valorPrincipal, subtitulo, icono, color, p
             }
             {prefijo === '%' ? '%' : ''}
           </p>
-          <p className="text-xs opacity-70">{subtitulo}</p>
+          <p className="text-xs opacity-70 mb-2">{subtitulo}</p>
+          {formula && (
+            <div className="mt-3 pt-3 border-t border-current opacity-40">
+              <p className="text-xs font-mono leading-relaxed">{formula}</p>
+            </div>
+          )}
         </div>
         <IconComponent className={`w-10 h-10 ${iconColor}`} />
       </div>
@@ -110,6 +115,7 @@ const VentasGanancias = ({ datos }) => {
           subtitulo={datos.tarjeta_1_ganancia_neta.subtitulo}
           icono={datos.tarjeta_1_ganancia_neta.icono}
           color={datos.tarjeta_1_ganancia_neta.color}
+          formula="📊 Cálculo: Total Vendido - Descuentos - Gastos Fijos Diarios = Tu ganancia real del día"
         />
         
         <TarjetaInformativa
@@ -118,6 +124,7 @@ const VentasGanancias = ({ datos }) => {
           subtitulo={datos.tarjeta_2_ventas_brutas.subtitulo}
           icono={datos.tarjeta_2_ventas_brutas.icono}
           color={datos.tarjeta_2_ventas_brutas.color}
+          formula="💰 Cálculo: Suma de todas las ventas (efectivo + transferencia + tarjeta + QR)"
         />
         
         <TarjetaInformativa
@@ -126,6 +133,7 @@ const VentasGanancias = ({ datos }) => {
           subtitulo={datos.tarjeta_3_descuentos.subtitulo}
           icono={datos.tarjeta_3_descuentos.icono}
           color={datos.tarjeta_3_descuentos.color}
+          formula="🏷️ Cálculo: Total de descuentos aplicados a clientes en este período"
         />
         
         <TarjetaInformativa
@@ -134,6 +142,7 @@ const VentasGanancias = ({ datos }) => {
           subtitulo={datos.tarjeta_4_resultado_operacional.subtitulo}
           icono={datos.tarjeta_4_resultado_operacional.icono}
           color={datos.tarjeta_4_resultado_operacional.color}
+          formula="📈 Cálculo: Total Vendido - Descuentos = Ingresos netos (sin contar gastos fijos)"
         />
       </div>
     </div>
@@ -347,6 +356,7 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
           subtitulo={datos.tarjeta_1_gastos_mensuales?.subtitulo || ''}
           icono={datos.tarjeta_1_gastos_mensuales?.icono || 'building'}
           color={datos.tarjeta_1_gastos_mensuales?.color || 'purple'}
+          formula="💼 Total de gastos fijos del mes (alquiler + sueldos + servicios + impuestos)"
         />
         
         <TarjetaInformativa
@@ -355,6 +365,7 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
           subtitulo={datos.tarjeta_2_gastos_diarios?.subtitulo || ''}
           icono={datos.tarjeta_2_gastos_diarios?.icono || 'calendar'}
           color={datos.tarjeta_2_gastos_diarios?.color || 'blue'}
+          formula="📅 Cálculo: Gastos Mensuales ÷ Días del Mes = Gasto promedio por día"
         />
         
         <TarjetaInformativa
@@ -363,6 +374,7 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
           subtitulo={datos.tarjeta_3_gastos_periodo?.subtitulo || ''}
           icono={datos.tarjeta_3_gastos_periodo?.icono || 'calendar'}
           color={datos.tarjeta_3_gastos_periodo?.color || 'orange'}
+          formula="📊 Cálculo: Gasto Diario × Días del Período = Total de gastos en este período"
         />
         
         <TarjetaInformativa
@@ -371,6 +383,7 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
           subtitulo={datos.tarjeta_4_utilidad_neta?.subtitulo || ''}
           icono={datos.tarjeta_4_utilidad_neta?.icono || 'trending-up'}
           color={datos.tarjeta_4_utilidad_neta?.color || 'green'}
+          formula="💰 Cálculo: (Ventas - Descuentos) - Gastos Fijos del Período = Ganancia real"
         />
         
         <TarjetaInformativa
@@ -380,6 +393,7 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
           icono={datos.tarjeta_5_progreso_mes?.icono || 'target'}
           color={datos.tarjeta_5_progreso_mes?.color || 'orange'}
           prefijo="%"
+          formula="📈 Cálculo: (Días transcurridos ÷ Total días del mes) × 100 = % del mes completado"
         />
         
         <TarjetaInformativa
@@ -389,6 +403,7 @@ const InformesGastosFijos = ({ datos, onGastosChange, gastosActuales }) => {
           icono={datos.tarjeta_6_roi_neto?.icono || 'percent'}
           color={datos.tarjeta_6_roi_neto?.color || 'red'}
           prefijo="%"
+          formula="💹 Cálculo: (Utilidad Neta ÷ Gastos Fijos) × 100 = % de retorno sobre inversión"
         />
       </div>
     </div>
@@ -426,6 +441,7 @@ const MetodosPago = ({ datos }) => {
           subtitulo={datos.tarjeta_1_efectivo.subtitulo}
           icono={datos.tarjeta_1_efectivo.icono}
           color={datos.tarjeta_1_efectivo.color}
+          formula="💵 Total de ventas cobradas en efectivo. Importante: debe estar en caja al cierre"
         />
         
         <TarjetaInformativa
@@ -434,6 +450,7 @@ const MetodosPago = ({ datos }) => {
           subtitulo={datos.tarjeta_2_transferencia.subtitulo}
           icono={datos.tarjeta_2_transferencia.icono}
           color={datos.tarjeta_2_transferencia.color}
+          formula="🏦 Cobros por transferencia bancaria. Verificar que ingresaron a cuenta"
         />
         
         <TarjetaInformativa
@@ -442,6 +459,7 @@ const MetodosPago = ({ datos }) => {
           subtitulo={datos.tarjeta_3_tarjeta.subtitulo}
           icono={datos.tarjeta_3_tarjeta.icono}
           color={datos.tarjeta_3_tarjeta.color}
+          formula="💳 Ventas con tarjeta de crédito/débito. Se acreditan en 24-48hs"
         />
         
         <TarjetaInformativa
@@ -450,6 +468,7 @@ const MetodosPago = ({ datos }) => {
           subtitulo={datos.tarjeta_4_qr.subtitulo}
           icono={datos.tarjeta_4_qr.icono}
           color={datos.tarjeta_4_qr.color}
+          formula="📱 Cobros con QR (MercadoPago, etc). Acreditación instantánea"
         />
       </div>
     </div>

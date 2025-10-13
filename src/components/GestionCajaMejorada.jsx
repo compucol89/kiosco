@@ -28,7 +28,7 @@ import { useAuth } from '../contexts/AuthContext';
 import CONFIG from '../config/config';
 
 // ========== COMPONENTE DE TARJETA MODERNA ==========
-const TarjetaModerna = ({ titulo, valor, subtitulo, icono: IconComponent, color, prefijo = '$' }) => {
+const TarjetaModerna = ({ titulo, valor, subtitulo, icono: IconComponent, color, prefijo = '$', formula }) => {
   const estilos = {
     'green': 'bg-gradient-to-br from-green-50 to-green-100 border-green-200 text-green-800',
     'blue': 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 text-blue-800',
@@ -67,7 +67,12 @@ const TarjetaModerna = ({ titulo, valor, subtitulo, icono: IconComponent, color,
         <p className="text-3xl font-bold mb-2">
           {formatearValor(valor)}
         </p>
-        <p className="text-xs opacity-70 leading-relaxed">{subtitulo}</p>
+        <p className="text-xs opacity-70 leading-relaxed mb-2">{subtitulo}</p>
+        {formula && (
+          <div className="mt-3 pt-3 border-t border-current opacity-50">
+            <p className="text-xs font-mono leading-relaxed">{formula}</p>
+          </div>
+        )}
       </div>
     </div>
   );

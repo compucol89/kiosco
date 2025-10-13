@@ -111,13 +111,13 @@ try {
         }
     }
     
-    // Ordenar por cantidad vendida y tomar top 5
+    // Ordenar por cantidad vendida y tomar top 10
     uasort($productos_contador, function($a, $b) {
         return $b['cantidad_vendida'] - $a['cantidad_vendida'];
     });
     
     // Convertir a array numérico para React
-    $productos_mas_vendidos = array_values(array_slice($productos_contador, 0, 5));
+    $productos_mas_vendidos = array_values(array_slice($productos_contador, 0, 10));
     
     // ========== ESTADÍSTICAS DE CAJA ==========
     
