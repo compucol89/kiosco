@@ -40,45 +40,50 @@ const LoginPage = () => {
     setError(null);
     
     try {
-      // 🔐 PASO 1: Verificar dispositivo confiable
-      const dispositivoResponse = await axios.get(
-        `${CONFIG.API_URL}/api/dispositivos_confiables.php?accion=verificar_dispositivo&fingerprint=${encodeURIComponent(deviceFingerprint)}&username=${encodeURIComponent(username)}`
-      );
+      // 🔐 BYPASS: Admin nunca requiere validación de dispositivo
+      const isAdmin = username.toLowerCase() === 'admin';
       
-      if (dispositivoResponse.data && !dispositivoResponse.data.acceso_concedido) {
-        // Dispositivo no autorizado
-        if (dispositivoResponse.data.requiere_aprobacion) {
-          // Solicitar código de activación
-          const solicitudResponse = await axios.post(
-            `${CONFIG.API_URL}/api/dispositivos_confiables.php?accion=solicitar_acceso`,
-            {
-              device_fingerprint: deviceFingerprint,
-              username: username
+      if (!isAdmin) {
+        // 🔐 PASO 1: Verificar dispositivo confiable (solo para NO admin)
+        const dispositivoResponse = await axios.get(
+          `${CONFIG.API_URL}/api/dispositivos_confiables.php?accion=verificar_dispositivo&fingerprint=${encodeURIComponent(deviceFingerprint)}&username=${encodeURIComponent(username)}`
+        );
+        
+        if (dispositivoResponse.data && !dispositivoResponse.data.acceso_concedido) {
+          // Dispositivo no autorizado
+          if (dispositivoResponse.data.requiere_aprobacion) {
+            // Solicitar código de activación
+            const solicitudResponse = await axios.post(
+              `${CONFIG.API_URL}/api/dispositivos_confiables.php?accion=solicitar_acceso`,
+              {
+                device_fingerprint: deviceFingerprint,
+                username: username
+              }
+            );
+            
+            if (solicitudResponse.data.success) {
+              setCodigoActivacion(solicitudResponse.data.codigo_activacion);
+              setDispositivoBloqueado(true);
+              setEstadoDispositivo('pendiente');
+              setLoading(false);
+              return;
             }
-          );
-          
-          if (solicitudResponse.data.success) {
-            setCodigoActivacion(solicitudResponse.data.codigo_activacion);
+          } else if (dispositivoResponse.data.estado === 'pendiente') {
+            // Ya tiene solicitud pendiente
+            setCodigoActivacion(dispositivoResponse.data.codigo_activacion);
             setDispositivoBloqueado(true);
             setEstadoDispositivo('pendiente');
             setLoading(false);
             return;
+          } else {
+            setError(dispositivoResponse.data.motivo || 'Dispositivo no autorizado');
+            setLoading(false);
+            return;
           }
-        } else if (dispositivoResponse.data.estado === 'pendiente') {
-          // Ya tiene solicitud pendiente
-          setCodigoActivacion(dispositivoResponse.data.codigo_activacion);
-          setDispositivoBloqueado(true);
-          setEstadoDispositivo('pendiente');
-          setLoading(false);
-          return;
-        } else {
-          setError(dispositivoResponse.data.motivo || 'Dispositivo no autorizado');
-          setLoading(false);
-          return;
         }
       }
       
-      // 🔐 PASO 2: Si el dispositivo está aprobado, proceder con autenticación
+      // 🔐 PASO 2: Proceder con autenticación (admin bypasea validación de dispositivo)
       const response = await axios.post(`${CONFIG.API_URL}/api/auth.php`, {
         username: username,
         password: password
