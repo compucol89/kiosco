@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import CONFIG from '../config/config';
 import DashboardResumenCaja from './DashboardResumenCaja';
+import { useCaja } from '../contexts/CajaContext';
 
 // 📊 COMPONENTE: TARJETA PRINCIPAL
 const MainCard = ({ 
@@ -147,6 +148,9 @@ const ProgressBar = ({ current, target, label }) => {
 const DashboardVentasCompleto = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // 🔥 HOOK DE CAJA: Detectar cambios en estado de caja
+  const { cajaAbierta, turnoActivo, refrescarEstado } = useCaja();
   
   // Estados para datos principales
   const [ventasData, setVentasData] = useState({
@@ -379,6 +383,46 @@ const DashboardVentasCompleto = () => {
   useEffect(() => {
     cargarTodosLosDatos();
     const interval = setInterval(cargarTodosLosDatos, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 🔥 DETECTAR CAMBIO DE TURNO DE CAJA Y REFRESCAR AUTOMÁTICAMENTE
+  useEffect(() => {
+    // Detectar cuando cambia el turno de caja (se abre o cierra)
+    if (turnoActivo !== null) {
+      console.log('🔄 [Dashboard] Cambio de turno detectado - Refrescando datos...');
+      cargarTodosLosDatos();
+    }
+  }, [turnoActivo?.id]); // Escuchar cambios en el ID del turno
+
+  // 🔥 DETECTAR CAMBIO DE DÍA Y RESETEAR DASHBOARD
+  useEffect(() => {
+    const checkDayChange = () => {
+      const lastDate = localStorage.getItem('dashboard_last_date');
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      if (lastDate && lastDate !== today) {
+        console.log('📅 [Dashboard] Cambio de día detectado - Reseteando dashboard...');
+        // Resetear estados
+        setVentasData({
+          totalVentas: 0,
+          ticketPromedio: 0,
+          cantidadVentas: 0,
+          promedioPorTurno: 0,
+          ventasPorMetodo: { efectivo: 0, tarjeta: 0, transferencia: 0, qr: 0 }
+        });
+        // Recargar datos frescos
+        cargarTodosLosDatos();
+      }
+      
+      // Guardar fecha actual
+      localStorage.setItem('dashboard_last_date', today);
+    };
+    
+    // Verificar al montar y cada minuto
+    checkDayChange();
+    const interval = setInterval(checkDayChange, 60000); // Cada 1 minuto
+    
     return () => clearInterval(interval);
   }, []);
 

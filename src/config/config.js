@@ -2,7 +2,7 @@
 const CONFIG = {
   // URL base de la API - Detecta automáticamente el entorno
   API_URL: process.env.NODE_ENV === 'production' 
-    ? window.location.origin  // En Railway usa la misma URL
+    ? window.location.origin + '/kiosco'  // Producción: dominio + /kiosco
     : 'http://localhost/kiosco', // En desarrollo usa Laragon local
   
   // URL para endpoints específicos de la API

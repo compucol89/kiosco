@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
+import { CajaProvider } from './contexts/CajaContext';
 import { ToastProvider } from './hooks/ToastContext';
 import { BrowserRouter as Router } from 'react-router-dom';
 
@@ -11,9 +12,11 @@ root.render(
   <React.StrictMode>
     <Router>
       <AuthProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
+        <CajaProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </CajaProvider>
       </AuthProvider>
     </Router>
   </React.StrictMode>

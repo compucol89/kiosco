@@ -4,7 +4,7 @@
 // RELEVANT FILES: ProductosPage.jsx, useProductSearch.js
 
 import React from 'react';
-import { Search, Plus, RefreshCw, Grid, List, Download, Upload } from 'lucide-react';
+import { Search, Plus, RefreshCw, Grid, List, Download, Upload, TrendingUp } from 'lucide-react';
 
 const ProductSearch = ({ 
   searchTerm,
@@ -15,6 +15,7 @@ const ProductSearch = ({
   onRefresh,
   onExportar,
   onImportar,
+  onPricingConfig,
   loading = false
 }) => {
   return (
@@ -85,6 +86,14 @@ const ProductSearch = ({
             title="Importar Productos"
           >
             <Upload className="w-5 h-5" />
+          </button>
+
+          <button
+            onClick={onPricingConfig}
+            className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
+            title="Configurar Precios Dinámicos"
+          >
+            <TrendingUp className="w-5 h-5" />
           </button>
 
           <button

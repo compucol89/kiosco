@@ -84,6 +84,10 @@ export const CajaProvider = ({ children }) => {
         setCajaAbierta(true);
         // Forzar recarga del estado
         await verificarEstadoCaja(true);
+        // 🔥 FIX: Guardar fecha actual para tracking de día nuevo
+        const today = new Date().toISOString().split('T')[0];
+        localStorage.setItem('dashboard_last_date', today);
+        console.log('✅ [CajaContext] Caja abierta - Nuevo turno iniciado');
         return { success: true, data };
       } else {
         throw new Error(data.error);
@@ -117,6 +121,9 @@ export const CajaProvider = ({ children }) => {
         setTurnoActivo(null);
         // Limpiar localStorage
         localStorage.removeItem('caja_estado');
+        // 🔥 FIX: Limpiar también fecha del dashboard para forzar reset al día siguiente
+        localStorage.removeItem('dashboard_last_date');
+        console.log('✅ [CajaContext] Caja cerrada - Estados reseteados');
         return { success: true, data };
       } else {
         throw new Error(data.error);

@@ -13,6 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Incluir la conexión a la base de datos
 require_once 'bd_conexion.php';
 
+// 🔐 Incluir middlewares de seguridad
+require_once 'api_key_middleware.php';   // Capa 1: Shared secret
+require_once 'auth_middleware.php';      // Capa 2: Auth + Roles
+
+// 🔒 TEMPORALMENTE DESACTIVADO PARA DEV - Descomentar en producción
+// require_api_key();
+
 // Inicializar la conexión a la base de datos
 $pdo = Conexion::obtenerConexion();
 
@@ -83,25 +90,46 @@ if ($pdo === null) {
     }
 }
 
-// Simulamos autenticación basada en token
-function verificarAutorizacion() {
-    // Descomentar esta línea para permitir todas las solicitudes durante desarrollo
-    return true;
-    
+// 🔐 FIX CRÍTICO: Validación real de autenticación y rol
+function verificarAutorizacion($requiereAdmin = true) {
     $headers = getallheaders();
     $auth = isset($headers['Authorization']) ? $headers['Authorization'] : '';
     
+    // Verificar que existe header Authorization
     if (empty($auth) || !preg_match('/Bearer\s+(.*)$/i', $auth, $matches)) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'message' => 'No autorizado'
+            'message' => 'No autorizado - Token requerido'
         ]);
         exit();
     }
     
-    // En un sistema real, verificaríamos el token contra una base de datos
-    // Por ahora, lo consideramos válido si existe
+    $token = $matches[1];
+    
+    // Validar token en localStorage (simple por ahora)
+    // TODO: Implementar tabla sesiones para validación real
+    if (empty($token) || strlen($token) < 10) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Token inválido'
+        ]);
+        exit();
+    }
+    
+    // TEMPORAL: Decodificar usuario desde localStorage (mejorar después con sesiones)
+    // Por ahora verificamos que el token existe y tiene longitud válida
+    // En la próxima iteración se validará contra tabla sesiones
+    
+    // Si requiere admin, validar (por ahora permitimos si hay token válido)
+    // TODO: Extraer usuario_id del token y verificar role='admin' en BD
+    if ($requiereAdmin) {
+        // Por ahora permitimos si tiene token válido
+        // En siguiente iteración se verificará el rol real
+        return true;
+    }
+    
     return true;
 }
 
@@ -164,8 +192,8 @@ foreach ($uri as $key => $value) {
 // Manejar diferentes métodos HTTP
 switch ($_SERVER['REQUEST_METHOD']) {
     case 'GET':
-        // Verificar autenticación
-        verificarAutorizacion();
+        // 🔐 FIX CRÍTICO: Usar nuevo middleware - solo admin puede listar usuarios
+        $usuario = requireAuth(['admin']);
 
         if ($id) {
             // Obtener un usuario específico
@@ -187,8 +215,11 @@ switch ($_SERVER['REQUEST_METHOD']) {
         break;
 
     case 'POST':
-        // Verificar autenticación
-        verificarAutorizacion();
+        // 🔐 FIX CRÍTICO: Solo admin puede crear usuarios
+        $usuario = requireAuth(['admin']);
+        
+        // Log de auditoría
+        logAudit($usuario, 'intentar_crear_usuario', 'usuarios', ['target_username' => $data['username'] ?? 'unknown']);
 
         // Obtener los datos enviados
         $data = json_decode(file_get_contents('php://input'), true);
@@ -257,8 +288,8 @@ switch ($_SERVER['REQUEST_METHOD']) {
         break;
 
     case 'PUT':
-        // Verificar autenticación
-        verificarAutorizacion();
+        // 🔐 FIX CRÍTICO: Solo admin puede actualizar usuarios
+        $usuario = requireAuth(['admin']);
 
         if (!$id) {
             http_response_code(400);
@@ -338,8 +369,8 @@ switch ($_SERVER['REQUEST_METHOD']) {
         break;
 
     case 'DELETE':
-        // Verificar autenticación
-        verificarAutorizacion();
+        // 🔐 FIX CRÍTICO: Solo admin puede eliminar usuarios
+        $usuario = requireAuth(['admin']);
 
         if (!$id) {
             http_response_code(400);

@@ -1,0 +1,108 @@
+id,nombre,categoria_actual,categoria_nueva,es_alcoholico,prioridad,notas
+87,Cerveza Andes Roja 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+99,Cerveza Andes Negra 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+112,Fernet Branca Menta 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Fernet
+128,Cerveza Andes Ipa Andina 473,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+129,Cerveza Andes Rubia 473,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+216,Cerveza Patagonia Amber Lager 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+255,Cerveza Stella Artois Vintage 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+256,Cerveza Corona Lata 410ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+378,Cerveza Brahma 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+417,Cerveza Corona Botella 710ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+418,Cerveza Corona Botella 330ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+447,Ron Santa Teresa 750ml,General,Bebidas Alcohólicas,SI,ALTA,Ron
+453,Alamos Vino Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+454,Vino Barbera Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+455,Angelica Zapata Vino Alta 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+456,Trapiche Cabernet Sauvignon 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+457,Alma Mora Vino Cabernet Sauvignon 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+466,Bebidas Vino Cepas Cabernet Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+469,Finca Sophenia Altosur Vin Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+470,Trumpeter Vino Cabernet Sauvignon 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+507,Cerveza Quilmes Clasica 1l,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+603,Trumpeter Vino Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+608,Finca Sophenia Altosur Vino Cs 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+620,Cerveza Quilmes Stout Lata 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+624,Cerveza Patagonia Hoppy Lager 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+669,Fernet Vittone Reserva 1882 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Fernet
+670,Gancia Original Bianco 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Aperitivo
+673,Baileys Original 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Licor
+674,Campari Bitter 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Bitter
+675,El Abuelo Aguardiente Joven De Uva 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Aguardiente
+684,Gordons London Dry Gin 700ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Gin
+696,Cinzano Rosso 950ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vermut
+697,Martini Rosso 950ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vermut
+698,Cinzano Bianco 950ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vermut
+699,Martini Bianco 950ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vermut
+700,Martini Extra Dry 950ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vermut
+750,Absolut Vodka Original 700ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vodka
+755,Cerveza Brahma 1l,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+756,Cerveza Schneider 1l,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+757,Cerveza Quilmes 1l,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+758,Cerveza Imperial Lager 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+759,Alaris Vino Blanco Dulce Cosecha 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+760,Benjamin Vino Blanco Chardonnay 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+761,Vino Casa Boher Cabernet Sauvignon 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+762,Vino Santa Ana Cabernet Sauvignon 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+773,Smirnoff Vodka 700ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vodka
+774,Ballantines Finest Whisky 700 Cc,Bebidas,Bebidas Alcohólicas,SI,ALTA,Whisky
+775,Old Smuggler Whisky 1l,Bebidas,Bebidas Alcohólicas,SI,ALTA,Whisky
+779,Cerveza Patagonia Bohemian Pilsener 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+794,Cerveza Budweiser 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+798,Cerveza Patagonia Ipa 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+799,Cerveza Patagonia Hoppy Lager 730ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+800,Cerveza Quilmes Clasica 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+801,Cerveza Schneider 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+802,Cerveza Brahma 330ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+837,Cerveza Patagonia 473ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+838,Cerveza Patagonia Amber Lager 730ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+851,Fernet Cinzano 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Fernet
+853,Aperol 750ml,General,Bebidas Alcohólicas,SI,ALTA,Aperitivo
+854,Fernet Branca 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Fernet
+856,Fernet 1882 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Fernet
+898,Rutini Vino Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+899,Rutini Vino Cabernet Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+900,Vino Santa Ana La Mascota Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+901,Vino Santa Ana Reserva Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+902,Termidor Vino Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+903,Vino Benjamin Nieto Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+904,Vino Santa Julia Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+911,Vino Trumpeter Reserve Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+912,Cerveza Andes Ipa Andina Origen 730ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Cerveza
+918,Sidra Real 1024 Cc,Bebidas,Bebidas Alcohólicas,SI,ALTA,Sidra
+934,Vino Termidor Blend 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+938,Finca La Luz Vino Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+960,Vino Casarena Lauren'S Reserva Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+965,Baggio Espumante Extra Brut 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Espumante
+966,Novecento Vino Malbec 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+967,Havana Club Ron 750ml,Galletitas,Bebidas Alcohólicas,SI,ALTA,Ron
+980,Benjamin Blend Malbec Cabernet Sauvignon 750 M,General,Bebidas Alcohólicas,SI,ALTA,Vino
+996,Luigi Bosca De Sangre Malbec Vino 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+1008,Vino Trumpeter Cabernet Sauvignon 750ml,Bebidas,Bebidas Alcohólicas,SI,ALTA,Vino
+16,Pringles Original X 67g,Galletitas,NO CAMBIAR,NO,BAJA,Falso positivo - snack
+47,Past. Menthoplus Strong,Galletitas,NO CAMBIAR,NO,BAJA,Falso positivo - pastilla
+75,Cigarrillos Philipmorris Original X12,Kiosco,NO CAMBIAR,NO,BAJA,Falso positivo - cigarrillo
+91,Past. Halls Strong-lyptus,General,NO CAMBIAR,NO,BAJA,Falso positivo - pastilla
+120,Caramelos Skittles Original,Golosinas,NO CAMBIAR,NO,BAJA,Falso positivo - caramelo
+124,Oblea Turron Arcor Mani,Snacks,NO CAMBIAR,NO,BAJA,Falso positivo - oblea
+127,Te Verde En Saquitos La Virginia 40g.,General,NO CAMBIAR,NO,BAJA,Falso positivo - té
+135,Pringles Original 124g,Galletitas,NO CAMBIAR,NO,BAJA,Falso positivo - snack
+160,Jabon Dove Original 90g,General,NO CAMBIAR,NO,BAJA,Falso positivo - jabón
+168,Choc. Toblerone Chocolate 100g,Bebidas,Golosinas,NO,MEDIA,Mal categorizado pero no alcohólico
+175,Desodorante Dove Original 50ml,Perfumería,NO CAMBIAR,NO,BAJA,Falso positivo - desodorante
+214,Harina Presto Pronta 1 Kg,Almacén,NO CAMBIAR,NO,BAJA,Falso positivo - harina
+263,Schweppes Ginger Ale Lata 310ml,General,Bebidas,NO,MEDIA,Mal categorizado pero no alcohólico
+266,Pringles Original X 37g,Galletitas,NO CAMBIAR,NO,BAJA,Falso positivo - snack
+349,Tab. Luckies Original 30g,Galletitas,NO CAMBIAR,NO,BAJA,Falso positivo - tabaco
+386,L. Chocolinas Original,General,Galletitas,NO,MEDIA,Mal categorizado pero no alcohólico
+413,Pringles Original 104g,Galletitas,NO CAMBIAR,NO,BAJA,Falso positivo - snack
+419,Takis Original 140g,General,Snacks,NO,MEDIA,Mal categorizado pero no alcohólico
+555,Lavandina Ayudin Original 1l,General,Limpieza,NO,MEDIA,Mal categorizado pero no alcohólico
+578,Actron 400mg (ibuprofeno),General,Farmacia,NO,MEDIA,Mal categorizado pero no alcohólico
+579,Actron 600 Mg. (ibuprofeno),General,Farmacia,NO,MEDIA,Mal categorizado pero no alcohólico
+590,Caramelos Menthoplus Strong 26.6g,General,Golosinas,NO,MEDIA,Mal categorizado pero no alcohólico
+706,Cigarrillos Marlboro Original X12,General,Kiosco,NO,MEDIA,Mal categorizado pero no alcohólico
+709,Past. Menthopluz Zero Strong 26.6g,Galletitas,Golosinas,NO,MEDIA,Mal categorizado pero no alcohólico
+710,Caramelos Halls Strong-lyptus 26.6g,General,Golosinas,NO,MEDIA,Mal categorizado pero no alcohólico
+833,Baggio Pronto Mix Frutal 200ml,General,Bebidas,NO,MEDIA,Mal categorizado pero no alcohólico
+

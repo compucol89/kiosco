@@ -23,6 +23,7 @@ import ProductFilters from './productos/components/ProductFilters';
 
 // ⚡ OPTIMIZACIÓN: Lazy loading de modales
 import { ProductFormModalDirect, ProductDetailModalDirect, ProductImportModalDirect } from './productos/components/LazyModals';
+import PricingQuickPanel from './productos/PricingQuickPanel';
 
 const ProductosPageOptimized = () => {
   // ⚡ HOOKS PERSONALIZADOS: Lógica separada
@@ -52,6 +53,7 @@ const ProductosPageOptimized = () => {
   const [modalDetalle, setModalDetalle] = React.useState(false);
   const [modalForm, setModalForm] = React.useState(false);
   const [modalImport, setModalImport] = React.useState(false);
+  const [modalPricing, setModalPricing] = React.useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = React.useState(null);
 
   // ⚡ OPTIMIZACIÓN: Cargar productos al montar
@@ -188,6 +190,7 @@ const ProductosPageOptimized = () => {
         onRefresh={cargarProductos}
         onExportar={handleExportar}
         onImportar={handleImportar}
+        onPricingConfig={() => setModalPricing(true)}
         loading={loading}
       />
 
@@ -249,6 +252,12 @@ const ProductosPageOptimized = () => {
             cargarProductos();
             cerrarModales();
           }}
+        />
+      )}
+
+      {modalPricing && (
+        <PricingQuickPanel
+          onClose={() => setModalPricing(false)}
         />
       )}
     </div>

@@ -49,12 +49,22 @@ switch ($method) {
             $porPagina = isset($_GET['limite']) ? (int)$_GET['limite'] : 10;
             $offset = ($pagina - 1) * $porPagina;
             
+            // 🌍 CONFIGURAR ZONA HORARIA ARGENTINA
+            date_default_timezone_set('America/Argentina/Buenos_Aires');
+            
             // Parámetros de filtrado
             $fecha_inicio = $_GET['fecha_inicio'] ?? null;
             $fecha_fin = $_GET['fecha_fin'] ?? null;
             $cliente_id = $_GET['cliente_id'] ?? null;
             $metodo_pago = $_GET['metodo_pago'] ?? null;
             $estado = $_GET['estado'] ?? null;
+            
+            // 🔥 FIX: Si no se especifican fechas, filtrar solo por HOY (turno actual)
+            // Esto evita que se muestren ventas de días anteriores
+            if (!$fecha_inicio && !$fecha_fin) {
+                $fecha_inicio = date('Y-m-d');
+                $fecha_fin = date('Y-m-d');
+            }
             
             // Construir la consulta base
             $sql = "SELECT * FROM ventas WHERE 1=1";

@@ -1,0 +1,173 @@
+# File: api/.htaccess
+# Apache security hardening for API directory
+# Exists to prevent directory listing, restrict methods, and secure PHP
+# Related files: api/cors_middleware.php, api/auth_middleware.php, api/api_key_middleware.php
+
+# ========================================
+# 🔒 SEGURIDAD BÁSICA
+# ========================================
+
+# Deshabilitar listado de directorios
+Options -Indexes
+
+# Deshabilitar seguimiento de enlaces simbólicos
+Options -FollowSymLinks
+
+# ========================================
+# 🚫 RESTRICCIÓN DE MÉTODOS HTTP
+# ========================================
+
+# Solo permitir GET, POST, OPTIONS (bloquear PUT, DELETE, PATCH, etc.)
+# Nota: Si usas PUT/DELETE en tu API, agregar a la lista
+<LimitExcept GET POST OPTIONS>
+    Require all denied
+</LimitExcept>
+
+# ========================================
+# 📋 HEADERS DE SEGURIDAD
+# ========================================
+
+<IfModule mod_headers.c>
+    # 🔥 TEMPORALMENTE COMENTADO - Esto rompe CORS
+    # Content-Type se setea en cada PHP individual
+    # Header set Content-Type "application/json; charset=utf-8"
+    
+    # Prevenir MIME sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Protección XSS básica
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # No permitir que la API se cargue en frames
+    Header set X-Frame-Options "DENY"
+    
+    # Política de referrer estricta
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Remover headers que revelan información del servidor
+    Header unset X-Powered-By
+    Header unset Server
+</IfModule>
+
+# ========================================
+# 🔐 CONFIGURACIÓN PHP
+# ========================================
+
+<IfModule mod_php8.c>
+    # Deshabilitar mostrar errores al cliente (usar logs)
+    php_flag display_errors Off
+    php_flag display_startup_errors Off
+    
+    # Reportar todos los errores pero solo a logs
+    php_value error_reporting E_ALL
+    php_flag log_errors On
+    
+    # Limitar uploads si no son necesarios
+    php_value upload_max_filesize 2M
+    php_value post_max_size 8M
+    
+    # Timeout razonable
+    php_value max_execution_time 30
+</IfModule>
+
+# ========================================
+# 🚫 PROTECCIÓN DE ARCHIVOS SENSIBLES
+# ========================================
+
+# Denegar acceso directo a archivos de configuración
+<FilesMatch "^(db_config\.php|config\.php|\.env|\.htpasswd)$">
+    Require all denied
+</FilesMatch>
+
+# Denegar acceso a archivos de backup y temporales
+<FilesMatch "\.(bak|backup|old|tmp|log|sql|zip|tar|gz)$">
+    Require all denied
+</FilesMatch>
+
+# ========================================
+# 🔒 BASIC AUTH (OPCIONAL - COMENTADO)
+# ========================================
+
+# Descomentar para activar Basic Auth en toda la carpeta /api/
+# Útil para staging o emergencias en producción
+# 
+# Primero crear .htpasswd:
+# htpasswd -c /ruta/fuera/webroot/.htpasswd apisafeuser
+#
+# AuthType Basic
+# AuthName "Protected API - Authorization Required"
+# AuthUserFile /home/usuario/.htpasswd
+# Require valid-user
+
+# ========================================
+# 🛡️ ALLOWLIST POR IP (OPCIONAL - COMENTADO)
+# ========================================
+
+# Descomentar para restringir acceso a IPs específicas
+# Útil para endpoints de admin o APIs internas
+#
+# <RequireAll>
+#     Require ip 1.2.3.4
+#     Require ip 5.6.7.8
+# </RequireAll>
+
+# O usar Order/Deny (Apache 2.2):
+# Order deny,allow
+# Deny from all
+# Allow from 1.2.3.4
+# Allow from 5.6.7.8
+
+# ========================================
+# ⚙️ MOD_REWRITE (SI SE USA)
+# ========================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Forzar HTTPS (descomentar en producción)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+    
+    # Bloquear user agents sospechosos (bots, scanners)
+    RewriteCond %{HTTP_USER_AGENT} ^.*(bot|spider|crawler|scraper|curl|wget|python|java|ruby).*$ [NC]
+    RewriteCond %{REQUEST_URI} !^/api/(auth|login)\.php$ [NC]
+    RewriteRule ^(.*)$ - [F,L]
+    
+    # Bloquear requests con query strings sospechosas (SQL injection patterns)
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=http:// [OR]
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=(\.\.//?)+ [OR]
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=/([a-z0-9_.]//?)+ [NC,OR]
+    RewriteCond %{QUERY_STRING} \=PHP[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} [NC,OR]
+    RewriteCond %{QUERY_STRING} (\.\./|\.\.) [OR]
+    RewriteCond %{QUERY_STRING} (union|select|insert|drop|delete|update|cast|create|char|convert|alter|declare|exec|script)[^a-z] [NC]
+    RewriteRule ^(.*)$ - [F,L]
+</IfModule>
+
+# ========================================
+# 📝 NOTAS IMPORTANTES
+# ========================================
+
+# 1. Este .htaccess protege la CARPETA, no reemplaza auth de aplicación
+# 2. CORS se maneja en cors_middleware.php (más flexible)
+# 3. Auth por token se maneja en auth_middleware.php
+# 4. Rate limiting se maneja en auth.php (por código)
+# 5. Basic Auth es solo para staging o emergencias
+
+# ========================================
+# 🧪 TESTING
+# ========================================
+
+# Verificar que funciona:
+# 1. Navegar a http://localhost/kiosco/api/ → debe dar 403
+# 2. curl -X DELETE http://localhost/kiosco/api/usuarios.php → 405 Method Not Allowed
+# 3. curl http://localhost/kiosco/api/usuarios.php → 401 (sin token)
+# 4. Ver logs: no debe haber errores PHP en respuesta HTML
+
+# ========================================
+# 🔄 ROLLBACK
+# ========================================
+
+# Si algo falla, renombrar este archivo temporalmente:
+# mv .htaccess .htaccess.disabled
+# Probar la API
+# mv .htaccess.disabled .htaccess

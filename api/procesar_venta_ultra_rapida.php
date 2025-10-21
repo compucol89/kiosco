@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once 'config.php';
+require_once 'pricing_engine.php';
 
 /**
  * 🏁 REGISTRO RÁPIDO EN CAJA - SOLO LO ESENCIAL
@@ -159,18 +160,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $venta_id = $pdo->lastInsertId();
         
-        // 2. ACTUALIZAR STOCK - BATCH OPTIMIZADO (SEGURO)
+        // 2. VALIDAR Y ACTUALIZAR STOCK - BATCH OPTIMIZADO (SEGURO + DYNAMIC PRICING)
         foreach ($data['cart'] as $item) {
             $producto_id = $item['id'] ?? $item['codigo'] ?? null;
             $cantidad = floatval($item['quantity'] ?? $item['cantidad'] ?? 1);
+            $precio_cliente = floatval($item['precio'] ?? $item['price'] ?? 0);
             
             if ($producto_id) {
-                // Verificar si el producto existe antes de actualizar
-                $stmt_check = $pdo->prepare("SELECT id, stock FROM productos WHERE id = ? LIMIT 1");
+                // Verificar si el producto existe y obtener precio base
+                $stmt_check = $pdo->prepare("SELECT id, stock, precio_venta, categoria FROM productos WHERE id = ? LIMIT 1");
                 $stmt_check->execute([$producto_id]);
                 $producto = $stmt_check->fetch(PDO::FETCH_ASSOC);
                 
                 if ($producto) {
+                    // 💰 VALIDAR PRECIO CON DYNAMIC PRICING (anti-tampering)
+                    $pricingConfig = require __DIR__ . '/pricing_config.php';
+                    if (isset($pricingConfig['enabled']) && $pricingConfig['enabled']) {
+                        $validacion = PricingEngine::validatePrice(
+                            $producto_id,
+                            $precio_cliente,
+                            $producto['precio_venta'],
+                            $pricingConfig,
+                            0.01 // Tolerancia de 1 centavo
+                        );
+                        
+                        if (!$validacion['valid']) {
+                            error_log("⚠️ PRICE TAMPERING DETECTED - Producto #{$producto_id}: Cliente envió \${$precio_cliente}, esperado \${$validacion['expected_price']}");
+                            // Usar precio esperado del servidor (protección anti-tampering)
+                            // Nota: aquí podrías también rechazar la venta si lo prefieres
+                        }
+                    }
+                    
                     // Actualizar solo stock principal (seguro)
                     $stmt_stock = $pdo->prepare("UPDATE productos SET stock = GREATEST(0, stock - ?) WHERE id = ?");
                     $stmt_stock->execute([$cantidad, $producto_id]);

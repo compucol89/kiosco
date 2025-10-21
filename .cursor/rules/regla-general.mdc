@@ -1,0 +1,259 @@
+---
+alwaysApply: true
+---
+
+# GOAL
+- your task is to help the user write clean, simple, readable, modular, and well-documented code.  
+- do exactly what the user asks for — nothing more, nothing less.  
+- think hard, like a Senior Developer would.  
+
+# ABOUT TAYRONA ALMACÉN - KIOSCO POS
+- this codebase belongs to our retail system **Tayrona Almacén - Kiosco POS**.  
+- it is a Point of Sale and management system for physical stores in **Argentina**.  
+- the app handles sales, cash control, inventory, products, reports, and finances.  
+- we are a small, independent development team with limited resources.  
+- we CANNOT overthink or over-engineer. we must always go for the **80/20 solution**.  
+
+# MODUS OPERANDI
+- prioritize **simplicity**, **clarity**, and **performance**.  
+- every change should make the system **lighter, faster, and easier to maintain**.  
+- write short, simple sentences. avoid jargon and unnecessary abstractions.  
+
+# TECH STACK
+- **Frontend:** React 18.2 (JSX, Hooks, Context API - NO Redux)  
+- **Backend:** PHP 8.0+ (RESTful APIs)  
+- **Database:** MySQL 8.0+ / MariaDB 10.6+  
+- **Styling:** Tailwind CSS 3.3  
+- **Build Tools:** Node.js 18+, NPM 8+  
+- **Server:** Apache 2.4+ (with mod_rewrite)  
+
+# DEPLOYED ENVIRONMENTS
+- **Local Dev:** Laragon (Windows) - Apache + PHP 8.0 + MySQL  
+- **Staging:** Railway / Hostinger test environments  
+- **Production:** Hostinger / DigitalOcean Droplet  
+
+# 🚨 CRITICAL SYSTEM RULES
+
+## 1. CASH CONTROL (MANDATORY)
+- **RULE #1:** ❌ **NO SALES WITHOUT OPEN CASH REGISTER**  
+- before processing ANY sale, MUST validate cash register is open  
+- use `useCajaStatus()` hook - validates with `canProcessSales` flag  
+- every sale MUST sync with cash system automatically  
+- key files:  
+  - `src/contexts/CajaContext.jsx` - global cash state  
+  - `src/hooks/useCajaStatus.js` - validation hook (CRITICAL)  
+  - `src/services/cajaService.js` - cash service  
+  - `api/gestion_caja_completa.php` - cash API  
+  - `api/pos_status.php` - cash status endpoint  
+
+## 2. GLOBAL STATE (CONTEXT API)
+- **AuthContext** - authentication, user roles, permissions  
+- **CajaContext** - real-time cash register state (CRITICAL)  
+- **NO Redux** - only React Context API  
+
+## 3. PERMISSIONS SYSTEM
+- **3 roles:** admin, vendedor, cajero  
+- granular permissions per module  
+- hook: `usePermisos()` - page access validation  
+- defined in `AuthContext.jsx` (lines 4-131)  
+- **admin:** full access  
+- **vendedor:** sales + read-only products  
+- **cajero:** sales + cash control  
+
+## 4. AFIP INTEGRATION (ARGENTINA)
+- electronic invoicing system integrated with AFIP  
+- **3 methods:** hybrid (recommended), direct, real SDK  
+- invoice types: Factura A, B, C  
+- certificates in `/api/certificados/`  
+- logs in `/api/logs/afip_*.log`  
+- main endpoint: `api/afip_hibrido_inteligente.php`  
+
+# DATABASE
+- all core data lives in MySQL 8.0+  
+- charset: **utf8mb4** (full Unicode support)  
+- timezone: **America/Argentina/Buenos_Aires** (UTC-3)  
+- **CRITICAL TABLES:**  
+  - `turnos_caja` - cash register shifts  
+  - `movimientos_caja_detallados` - cash movements  
+  - `ventas` - sales with `turno_caja_id` FK (REQUIRED)  
+  - `detalle_ventas` - sale items  
+  - `productos` - products with `stock_actual` and `stock_minimo`  
+  - `usuarios` - users with roles  
+- foreign keys ensure data consistency  
+- **NO DB migrations** allowed unless explicitly approved by User  
+
+# DATABASE CONNECTION
+- **SINGLE CONFIG FILE:** `api/db_config.php` (ONLY file to modify credentials)  
+- connection class: `api/bd_conexion.php` (Singleton pattern)  
+- all ~110 endpoints use: `$pdo = Conexion::obtenerConexion();`  
+
+# API ARCHITECTURE
+- **~110 REST-style endpoints** in `/api/`  
+- all responses are JSON  
+- naming: `camelCase` for JS, `snake_case` for PHP  
+- **KEY ENDPOINTS:**  
+  - `pos_status.php` - cash register status (CRITICAL)  
+  - `gestion_caja_completa.php` - cash management  
+  - `productos_pos_optimizado.php` - products for POS  
+  - `procesar_venta_ultra_rapida.php` - process sale  
+  - `ventas_reales.php` - sales list  
+  - `dashboard_stats.php` - dashboard metrics  
+
+# CUSTOM HOOKS (18 total)
+- **CRITICAL:**  
+  - `useCajaStatus` - cash register validation (MANDATORY in POS)  
+  - `usePermisos` - permissions validation  
+  - `useStockManager` - intelligent stock management  
+- **Cash Control:**  
+  - `useCajaApi`, `useCajaLogic`, `useCajaStatus`  
+- **Products:**  
+  - `useProductos`, `usePOSProducts`, `useStockManager`  
+- **Dashboard:**  
+  - `useDashboardFintech`, `useExportManager`  
+- **Search:**  
+  - `useEnterpriseSearch`, `useHybridPOSSearch`  
+
+# SERVICES (17 total)
+- **CRITICAL:**  
+  - `cajaService.js` - unified cash service (429 LOC)  
+  - `cashSyncService.js` - sync sales → cash  
+- **AI:**  
+  - `openaiService.js` - OpenAI integration for analysis  
+  - `aiAnalytics.js`, `inventarioIAService.js`  
+- **Other:**  
+  - `api.js` - HTTP client base  
+  - `descuentosService.js` - payment method discounts  
+  - `permisosService.js` - permissions management  
+
+# SYSTEM MODULES (9 total)
+1. **Dashboard** - main metrics and overview  
+2. **Control de Caja** - cash register management (CRITICAL)  
+3. **Punto de Venta** - POS interface  
+4. **Productos** - product catalog  
+5. **Inventario** - inventory management  
+6. **Reportes de Ventas** - sales reports  
+7. **Análisis Financiero** - financial analysis  
+8. **Usuarios** - user management  
+9. **Configuración** - system settings  
+
+# VERSION CONTROL
+- we use **git** for version control  
+- always use clear commit messages (e.g., `fix: validate cash before sale`)  
+- NO force push to main/master  
+
+# ESSENTIAL COMMANDS
+- **Frontend:**  
+  - `npm start` - start development server (port 3000)  
+  - `npm run build` - build for production (ONLY on request)  
+- **Backend (if needed):**  
+  - Laragon handles Apache + PHP automatically  
+  - `php -S localhost:8000 -t api` - manual PHP server (alternative)  
+
+# CODE STYLE
+
+## File Headers (MANDATORY)
+Every file MUST start with 4-line comment header:
+```js
+// File: src/components/ReporteVentasModerno.jsx
+// Displays modern sales report dashboard for POS
+// Exists to show daily and monthly financial metrics dynamically
+// Related files: api/ventas_reales.php, src/services/api.js, src/components/Dashboard.jsx
+```
+
+## Comments
+- short, clear, plain English  
+- comment complex or non-obvious logic  
+- when in doubt, comment more rather than less  
+
+## Naming Conventions
+- **React:** PascalCase for components, camelCase for functions/variables  
+- **PHP:** snake_case for functions, variables, and database columns  
+- **Files:** kebab-case for utils, PascalCase.jsx for components  
+
+# UI DESIGN PRINCIPLES
+- **simple, clean, minimalistic** - like Apple or ChatGPT  
+- **color palette:** black, white, deep blue accent, neutral grays  
+- **NO unnecessary animations** or visual clutter  
+- **mobile-first** - responsive design mandatory  
+- use Tailwind utility classes - avoid custom CSS when possible  
+
+# VALIDATION FLOW (CRITICAL)
+
+## Before ANY Sale:
+```js
+// 1. Validate cash register is open
+const { canProcessSales, validateSaleOperation } = useCajaStatus();
+
+// 2. Check validation
+if (!canProcessSales) {
+  // Block sale - show error
+  return;
+}
+
+// 3. Process sale
+// 4. Sync with cash register automatically
+```
+
+## Before Opening Cash Register:
+```js
+// 1. Check no other shift is open
+// 2. Validate initial cash amount
+// 3. Record opening with user_id and timestamp
+```
+
+## Before Closing Cash Register:
+```js
+// 1. Count physical cash
+// 2. Compare with theoretical cash
+// 3. Register difference (if any)
+// 4. Require justification if difference > threshold
+```
+
+# SECURITY RULES
+- passwords hashed with PHP `password_hash()` (bcrypt)  
+- all DB queries use **PDO prepared statements** (prevent SQL injection)  
+- validate user permissions on BOTH frontend and backend  
+- CORS configured in `api/cors_middleware.php`  
+- sensitive data (API keys) in config files, NOT in git  
+
+# PERFORMANCE RULES
+- **POS search:** <25ms response time target  
+- **Image cache:** use `imageCache.js` utility  
+- **Lazy loading:** for modals and heavy components  
+- **Debounce:** search inputs with `useDebounce` hook  
+- **Pagination:** for large datasets (products, sales)  
+
+# ERROR HANDLING
+- always use try-catch blocks for async operations  
+- provide clear error messages to users  
+- log errors to console for debugging  
+- AFIP errors logged to `api/logs/afip_errors.log`  
+
+# TESTING PHILOSOPHY
+- test critical paths: cash control, sales, stock updates  
+- manual testing preferred over automated (limited resources)  
+- always test in LOCAL before deploying to PRODUCTION  
+
+# DEPLOYMENT CHECKLIST
+1. ✅ Test all critical flows (open cash, sale, close cash)  
+2. ✅ Verify DB credentials in `api/db_config.php`  
+3. ✅ Build frontend: `npm run build`  
+4. ✅ Upload files to server  
+5. ✅ Test AFIP integration (if enabled)  
+6. ✅ Verify responsive design on mobile  
+
+# ARGENTINA-SPECIFIC FEATURES
+- **Currency:** ARS (Argentine Peso) - format: $1,234.56  
+- **Date format:** DD/MM/YYYY HH:mm:ss  
+- **Timezone:** America/Argentina/Buenos_Aires (UTC-3)  
+- **AFIP:** electronic invoicing system (mandatory for registered businesses)  
+- **CUIT:** tax ID for businesses  
+- **IVA:** VAT tax system  
+
+# REMEMBER
+- **NEVER process a sale without validating cash register is open**  
+- **ALWAYS use `useCajaStatus()` in POS components**  
+- **ALWAYS sync sales with cash register automatically**  
+- keep it simple - 80/20 rule  
+- prioritize working code over perfect code  
+- when in doubt, ask the user

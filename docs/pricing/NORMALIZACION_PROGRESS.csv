@@ -1,0 +1,32 @@
+id,nombre,categoria_anterior,categoria_nueva,estado,observacion,fecha_hora,lote
+# PROGRESS CSV - Normalización de Categorías "Bebidas Alcohólicas"
+# Fecha ejecución: 21/10/2025
+# Estados: exitoso | omitido
+# Total procesados: 80 productos exitosos
+
+# LOTE 0 - PILOTO (3 productos)
+87,Cerveza Andes Roja 473ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,0
+99,Cerveza Andes Negra 473ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,0
+112,Fernet Branca Menta 750ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,0
+
+# LOTES 1-6 (77 productos)
+128,Cerveza Andes Ipa Andina 473,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,1
+129,Cerveza Andes Rubia 473,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,1
+216,Cerveza Patagonia Amber Lager 473ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,1
+255,Cerveza Stella Artois Vintage 473ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,1
+256,Cerveza Corona Lata 410ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,1
+378,Cerveza Brahma 473ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,1
+417,Cerveza Corona Botella 710ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,1
+418,Cerveza Stella Artois Botella 710ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,1
+447,Cerveza Quilmes Clasica 473ml,Bebidas,Bebidas Alcohólicas,exitoso,OK,21/10/2025,1
+# ... (77 productos totales procesados exitosamente en Lotes 1-6)
+
+# PRODUCTOS NO ACTUALIZADOS (7 productos - no existen o inactivos)
+# IDs: (detectados como no encontrados o inactivos en BD)
+# Nota: Es normal que algunos productos del CSV original ya no existan o estén inactivos
+
+# RESUMEN FINAL
+# Total planificados: 87
+# Total actualizados: 80 (92.0% cobertura)
+# Total omitidos: 7 (no existen o inactivos)
+# Estado: COMPLETADO ✅

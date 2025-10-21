@@ -1,6 +1,33 @@
+/* File: src/index.css
+   Applies minimal base styles for readability and focus visuals
+   Exists to unify typography and focus styling globally
+   Related files: tailwind.config.js, src/components/ui/* */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* Base typography and colors */
+  html, body {
+    @apply bg-white text-grayn-900 antialiased;
+  }
+  
+  /* Accessible focus rings */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary/60 ring-offset-2;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Better text rendering */
+  * {
+    @apply antialiased;
+  }
+}
 
 body {
   margin: 0;

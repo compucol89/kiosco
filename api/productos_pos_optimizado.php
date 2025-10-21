@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'bd_conexion.php';
 require_once 'cache_manager_pos.php';
+require_once 'pricing_engine.php';
 
 class ProductosPOSOptimizado {
     
@@ -178,6 +179,9 @@ class ProductosPOSOptimizado {
             
             // 📊 ENRIQUECER DATOS PARA POS
             $productos = $this->enriquecerProductosParaPOS($productos);
+            
+            // 💰 APLICAR DYNAMIC PRICING (si está activo)
+            $productos = $this->aplicarDynamicPricing($productos);
             
             // 📈 ESTADÍSTICAS DE STOCK
             $estadisticas = $this->obtenerEstadisticasStock($incluirSinStock);
@@ -382,6 +386,82 @@ class ProductosPOSOptimizado {
         if (!empty($producto['categoria'])) $terminos[] = strtolower($producto['categoria']);
         
         return implode(' ', $terminos);
+    }
+    
+    /**
+     * 💰 APLICAR DYNAMIC PRICING (precios dinámicos basados en tiempo)
+     * 
+     * Aplica reglas de ajuste de precios según día/hora
+     * Ej: bebidas alcohólicas +10% viernes y sábados desde las 18:00
+     */
+    private function aplicarDynamicPricing($productos) {
+        try {
+            // Cargar configuración de pricing
+            $pricingConfig = require __DIR__ . '/pricing_config.php';
+            
+            // Si el sistema está desactivado, retornar sin cambios
+            if (!isset($pricingConfig['enabled']) || !$pricingConfig['enabled']) {
+                return $productos;
+            }
+            
+            // Aplicar reglas a todos los productos
+            $productosConPricing = [];
+            foreach ($productos as $producto) {
+                // Preparar datos para el engine
+                $productoParaPricing = [
+                    'id' => $producto['id'] ?? null,
+                    'codigo_barras' => $producto['barcode'] ?? '',
+                    'categoria_slug' => $this->slugify($producto['categoria'] ?? ''),
+                    'precio' => $producto['precio_venta'] ?? 0,
+                    'nombre' => $producto['nombre'] ?? '',
+                ];
+                
+                // Aplicar reglas
+                $productoAjustado = PricingEngine::applyPricingRules($productoParaPricing, $pricingConfig);
+                
+                // Actualizar precio en el producto original si hubo ajuste
+                if (isset($productoAjustado['pricing']) && $productoAjustado['pricing']['ajuste_aplicado']) {
+                    $producto['precio_venta'] = $productoAjustado['precio'];
+                    $producto['precio_info']['precio_venta'] = (float)$productoAjustado['precio'];
+                    
+                    // Agregar metadata de pricing
+                    $producto['dynamic_pricing'] = [
+                        'activo' => true,
+                        'precio_original' => $productoAjustado['pricing']['precio_original'],
+                        'precio_ajustado' => $productoAjustado['pricing']['precio_ajustado'],
+                        'porcentaje_incremento' => $productoAjustado['pricing']['porcentaje'],
+                        'regla_aplicada' => $productoAjustado['pricing']['regla_nombre'],
+                        'regla_id' => $productoAjustado['pricing']['regla_id'],
+                    ];
+                } else {
+                    // Sin ajuste
+                    $producto['dynamic_pricing'] = [
+                        'activo' => false,
+                        'precio_original' => $producto['precio_venta'],
+                        'precio_ajustado' => null,
+                    ];
+                }
+                
+                $productosConPricing[] = $producto;
+            }
+            
+            return $productosConPricing;
+            
+        } catch (Exception $e) {
+            // Si falla el pricing, retornar productos sin cambios
+            error_log("Error en aplicarDynamicPricing: " . $e->getMessage());
+            return $productos;
+        }
+    }
+    
+    /**
+     * Convierte un string a slug (para matching de categorías)
+     */
+    private function slugify($text) {
+        $text = strtolower($text);
+        $text = preg_replace('/[^a-z0-9]+/', '-', $text);
+        $text = trim($text, '-');
+        return $text;
     }
     
     /**

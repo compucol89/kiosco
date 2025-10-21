@@ -253,9 +253,36 @@ export const ProductCardWithAlerts = ({
                     </div>
                 </div>
                 <div className="text-right flex-shrink-0 ml-2 space-y-1">
-                    <p className="text-lg font-bold text-blue-600">
-                        ${producto.precio_venta?.toLocaleString() || '0'}
-                    </p>
+                    {/* 💰 PRECIO CON DYNAMIC PRICING BADGE */}
+                    <div className="flex items-center gap-2 justify-end">
+                        {/* Precio original tachado si hay ajuste */}
+                        {producto.dynamic_pricing?.activo && (
+                            <span className="text-xs text-gray-500 line-through">
+                                ${producto.dynamic_pricing.precio_original?.toLocaleString()}
+                            </span>
+                        )}
+                        
+                        {/* Precio actual */}
+                        <p className={`text-lg font-bold ${producto.dynamic_pricing?.activo ? 'text-orange-600' : 'text-blue-600'}`}>
+                            ${producto.precio_venta?.toLocaleString() || '0'}
+                        </p>
+                        
+                        {/* Badge de ajuste */}
+                        {producto.dynamic_pricing?.activo && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 border border-orange-300">
+                                {producto.dynamic_pricing.porcentaje_incremento > 0 ? '+' : ''}
+                                {producto.dynamic_pricing.porcentaje_incremento}%
+                            </span>
+                        )}
+                    </div>
+                    
+                    {/* Nombre de la regla (opcional, solo si hay espacio) */}
+                    {producto.dynamic_pricing?.activo && producto.dynamic_pricing.regla_aplicada && (
+                        <p className="text-xs text-orange-600 truncate max-w-[200px]">
+                            {producto.dynamic_pricing.regla_aplicada}
+                        </p>
+                    )}
+                    
                     <div className="flex items-center gap-2 justify-end">
                         <StockIndicator stock={stockInfo.cantidad} stockMinimo={stockInfo.stock_minimo} size="sm" />
                         <StockBadge producto={producto} size="xs" />
@@ -286,10 +313,28 @@ export const ProductCardWithAlerts = ({
                     {producto.nombre}
                 </h3>
                 
-                {/* Precio */}
-                <p className="text-lg font-bold text-blue-600 mb-2">
-                    ${producto.precio_venta?.toLocaleString() || '0'}
-                </p>
+                {/* 💰 PRECIO CON DYNAMIC PRICING BADGE */}
+                <div className="mb-2">
+                    {/* Precio original tachado si hay ajuste */}
+                    {producto.dynamic_pricing?.activo && (
+                        <p className="text-xs text-gray-500 line-through mb-1">
+                            ${producto.dynamic_pricing.precio_original?.toLocaleString()}
+                        </p>
+                    )}
+                    
+                    {/* Precio actual */}
+                    <p className={`text-lg font-bold mb-1 ${producto.dynamic_pricing?.activo ? 'text-orange-600' : 'text-blue-600'}`}>
+                        ${producto.precio_venta?.toLocaleString() || '0'}
+                    </p>
+                    
+                    {/* Badge de ajuste */}
+                    {producto.dynamic_pricing?.activo && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 border border-orange-300">
+                            {producto.dynamic_pricing.porcentaje_incremento > 0 ? '+' : ''}
+                            {producto.dynamic_pricing.porcentaje_incremento}%
+                        </span>
+                    )}
+                </div>
                 
                 {/* Indicador de stock */}
                 <StockIndicator 
